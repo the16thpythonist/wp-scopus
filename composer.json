@@ -1,0 +1,17 @@
+{
+  "name": "the16thpythonist/wp-scopus",
+  "description": "Adding various post types to Wordpress to enable scopus publication support"
+  "type": "library",
+  "version": "0.0.0.0",
+  "authors": [
+    {
+      "name": "Jonas Teufel",
+      "email": "jonseb1998@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "the16thpythonist\\Wordpress\\Scopus\\": "src/the16thpythonist/Wordpress/Scopus"
+    }
+  }
+}
