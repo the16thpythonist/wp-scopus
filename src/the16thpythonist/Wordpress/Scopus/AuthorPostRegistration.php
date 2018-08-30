@@ -36,6 +36,13 @@ class AuthorPostRegistration
         'categories'        => 'Categories'
     );
 
+    public static $META_SINGLE = array(
+        'first_name'        => true,
+        'last_name'         => true,
+        'scopus_author_id'  => false,
+        'categories'        => false
+    );
+
     /**
      * AuthorPostRegistration constructor.
      *
@@ -195,9 +202,9 @@ class AuthorPostRegistration
      *
      * @since 0.0.0.0
      *
-     * @param WP_Post $post
+     * @param \WP_Post $post
      */
-    public function callbackMetabox(WP_Post $post) {
+    public function callbackMetabox(\WP_Post $post) {
         $post_id = $post->ID;
         /*
          * Within the author post there is metabox being used to input the meta data about the author, such as the
@@ -208,12 +215,19 @@ class AuthorPostRegistration
         foreach (self::$META_FIELDS as $key => $label) {
             $value = '';
             if (metadata_exists('post', $post_id, $key)) {
-                $value = get_post_meta($post_id, true);
+                $value = get_post_meta($post_id, $key, true);
+            }
+
+            if (self::$META_SINGLE) {
+                $type = 'text';
+            } else {
+                $type = 'textarea';
             }
 
             $meta[$key] = array(
                 'value'     => $value,
-                'label'     => $label
+                'label'     => $label,
+                'type'      => $type
             );
         }
 
@@ -230,7 +244,7 @@ class AuthorPostRegistration
                     <p>
                         <?php echo $data['label'] . ': '; ?>
                     </p>
-                    <input type="text" id="<?php echo $key; ?>" name="<?php echo $key; ?>" title="<?php echo $key; ?>" value="<?php echo $data['value']; ?>">
+                    <input type="<?php echo $data['type'];?>" id="<?php echo $key; ?>" name="<?php echo $key; ?>" title="<?php echo $key; ?>" value="<?php echo $data['value']; ?>">
                 </div>
             <?php endforeach; ?>
         </div>
