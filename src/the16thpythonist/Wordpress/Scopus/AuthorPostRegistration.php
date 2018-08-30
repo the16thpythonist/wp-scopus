@@ -6,6 +6,8 @@
  * Time: 15:14
  */
 
+namespace the16thpythonist\Wordpress\Scopus;
+
 /**
  * Class AuthorPostRegistration
  *
