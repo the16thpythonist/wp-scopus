@@ -9,6 +9,16 @@
       "email": "jonseb1998@gmail.com"
     }
   ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-data-safe.git"
+    }
+  ],
+  "require": {
+    "the16thpythonist/wp-data-safe": "@dev",
+    "kasparsj/scopus-search-api": "9999999-dev"
+  },
   "autoload": {
     "psr-4": {
       "the16thpythonist\\Wordpress\\Scopus\\": "src/the16thpythonist/Wordpress/Scopus"
