@@ -19,6 +19,8 @@ namespace the16thpythonist\Wordpress\Scopus;
  */
 class AuthorPostRegistration
 {
+    const PHP_NEWLINE = "\r\n";
+    const HTML_NEWLINE = '&#13;&#10;';
 
     public $label;
     public $post_type;
@@ -74,6 +76,12 @@ class AuthorPostRegistration
 
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
+
+        /*
+         * This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
+         * fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
+         */
+        add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
     }
 
     /**
@@ -151,7 +159,16 @@ class AuthorPostRegistration
          * their array entry. The key being the key also used in $META_FIELDS
          */
         foreach (self::$META_FIELDS as $key => $label) {
-            $value = $_POST[$key];
+            if (self::$META_SINGLE[$key] === true) {
+                $value = $_POST[$key];
+            } else {
+                /*
+                 * If the value is not single, which means it is multiple and represented by a textarea. Multiple values
+                 * are being displayed and entered as being in new lines. For saving the list as a meta value, it is
+                 * being converted into a csv string.
+                 */
+                $value = str_replace(self::PHP_NEWLINE, ',', $_POST[$key]);
+            }
             update_post_meta($post_id, $key, $value);
         }
 
@@ -218,7 +235,7 @@ class AuthorPostRegistration
                 $value = get_post_meta($post_id, $key, true);
             }
 
-            if (self::$META_SINGLE) {
+            if (self::$META_SINGLE[$key] === true) {
                 $type = 'text';
             } else {
                 $type = 'textarea';
@@ -240,11 +257,18 @@ class AuthorPostRegistration
         </p>
         <div class="scopus-meta-box-wrapper">
             <?php foreach ($meta as $key => $data): ?>
-                <div class="scopus-input-wrapper">
-                    <p>
-                        <?php echo $data['label'] . ': '; ?>
-                    </p>
-                    <input type="<?php echo $data['type'];?>" id="<?php echo $key; ?>" name="<?php echo $key; ?>" title="<?php echo $key; ?>" value="<?php echo $data['value']; ?>">
+                <div class="scopus-input-wrapper" style="display: flex; flex-direction: row; margin-bottom: 5px;">
+                    <?php if($data['type'] === 'text'): ?>
+                        <p style="width: 10%; height: 15px;">
+                            <?php echo $data['label'] . ': '; ?>
+                        </p>
+                        <input type="<?php echo $data['type'];?>" id="<?php echo $key; ?>" name="<?php echo $key; ?>" value="<?php echo $data['value']; ?>" style="flex-grow: 2;">
+                    <?php elseif ($data['type'] === 'textarea'): ?>
+                        <p style="width: 10%; align-self: flex-start;">
+                            <?php echo $data['label'] . ': '; ?>
+                        </p>
+                        <textarea id="<?php echo $key; ?>" name="<?php echo $key; ?>" rows="3" style="flex-grow: 2;"><?php echo str_replace(',', self::HTML_NEWLINE, $data['value'])?></textarea>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -268,8 +292,81 @@ class AuthorPostRegistration
                 </p>
             </div>
         </div>
+
+        <script>
+            function fetchAffiliations(author_id) {
+                jQuery.ajax({
+                    type:       'Get',
+                    timeout:    1000,
+                    dataType:   'html',
+                    async:      true,
+                    data:       {
+                        action:     'scopus_author_fetch_affiliations',
+                        author_id:  author_id
+                    }
+                    success: function(response) {}
+                })
+            }
+
+            var affiliations_already = [];
+
+            function updateAffiliations() {
+                var author_id = jQuery('#scopus_author_id').attr('value');
+                var affiliation_wrapper = jQuery('div#affiliation-wrapper');
+
+                try {
+                    var data = readDataPost('affiliations_author_' + author_id + '.json');
+                    var affiliations = JSON.parse(data);
+
+                    var keys = affiliations.keys();
+                    var difference = keys.filter(x => !affiliations_already.includes(x));
+
+                    var key, value, whitelist_checked, blacklist_checked;
+                    for (key in difference) {
+                        var array = affiliations[key];
+                        if (value['whitelist'] === true) { whitelist_checked = ' checked'; } else { whitelist_checked = ''; }
+                        if (value['blacklist'] === true) { blacklist_checked = ' checked'; } else { blacklist_checked = ''; }
+                        var checkbox_whitelist_string = '<input type="checkbox" name="whitelist-' + key + '" value="1"' + whitelist_checked +'>';
+                        var checkbox_blacklist_string = '<input type="checkbox" name="blacklist-' + key + '" value="1"' + blacklist_checked +'>';
+                        var description_string = '<p class="first">' + key + ': ' + value['name'] + '</p>';
+                        var html_string = '<div class="affiliation-row">' + description_string + checkbox_whitelist_string + checkbox_blacklist_string + '</div>';
+                        var row_element = jQuery(jQuery.parseHTML(html_string));
+                        row_element.appendTo(affiliation_wrapper);
+                    }
+                } catch (err) {
+                    console.log(error);
+                }
+
+                updateAffiliations();
+            }
+
+            var id_input = jQuery('#scopus_author_id');
+            id_input.on('focusout', function () {
+                var value = id_input.attr('value');
+                fetchAffiliations(value);
+            });
+            updateAffiliations();
+        </script>
         <?php
     }
 
+    /**
+     * The ajax method, which is called to start the process of fetching the author affiliations.
+     *
+     * CHANGELOG
+     *
+     * Added 31.08.2018
+     *
+     * @since 0.0.0.0
+     */
+    public function ajaxFetchAffiliations() {
+        if (array_key_exists('author_id', $_GET)) {
+            $author_id = $_GET['author_id'];
+
+            $fetcher = new AuthorAffiliationFetcher();
+            $fetcher->set($author_id);
+            $fetcher->fetchAffiliations();
+        }
+    }
 
 }
