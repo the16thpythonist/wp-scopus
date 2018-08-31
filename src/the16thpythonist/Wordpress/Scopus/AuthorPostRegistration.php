@@ -271,4 +271,5 @@ class AuthorPostRegistration
         <?php
     }
 
+
 }
