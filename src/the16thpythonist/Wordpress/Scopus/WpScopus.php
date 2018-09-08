@@ -52,5 +52,8 @@ class WpScopus
      */
     public static function register($post_type, string $api_key) {
         static::$API_KEY = $api_key;
+
+        $registration = new WpScopusRegistration();
+        $registration->register();
     }
 }

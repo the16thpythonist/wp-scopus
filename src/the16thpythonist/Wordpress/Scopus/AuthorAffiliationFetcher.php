@@ -14,6 +14,7 @@ use the16thpythonist\Wordpress\Data\DataPost;
 use Scopus\ScopusApi;
 use Scopus\Response\Author;
 use GuzzleHttp\Client;
+use Exception;
 
 /**
  * Class AuthorAffiliationFetcher
@@ -103,7 +104,9 @@ class AuthorAffiliationFetcher
         }
 
         $affiliations = array();
+
         $affiliation_ids = $this->fetchAffiliationIDs();
+
         foreach ($affiliation_ids as $affiliation_id) {
             try {
                 $affiliation_name = $this->fetchAffiliationName($affiliation_id);
@@ -116,8 +119,8 @@ class AuthorAffiliationFetcher
              * If there is no AuthorPost to the given author ID, whitelist and blacklist are being assumed as not set.
              */
             if ($exists) {
-                $whitelist = $author->is_whitelist($affiliation_id);
-                $blacklist = $author->is_blacklist($affiliation_id);
+                $whitelist = $author->isWhitelist($affiliation_id);
+                $blacklist = $author->isBlacklist($affiliation_id);
             } else {
                 $whitelist = false;
                 $blacklist = false;
@@ -131,6 +134,7 @@ class AuthorAffiliationFetcher
             // Overrides the results file with the new array, which contains one result more
             $this->file->save($affiliations);
         }
+        var_export($affiliations);
         return $affiliations;
     }
 
@@ -148,12 +152,15 @@ class AuthorAffiliationFetcher
     private function fetchAffiliationIDs() {
         try {
             $author = $this->scopus_api->retrieveAuthor($this->author_id);
+
             /*
              * The Scopus Api package saves the entire JSON array returned by the scopus website inside the protected
              * data field of each object, but only has a few getter methods defined for accessing this data.
              * By binding a closure that returns the field to the object, one can access the protected data anyways.
              */
-            $closure = function () {return $this->data;};
+            $closure = function () {
+                return $this->data;
+            };
             $data = \Closure::bind($closure, $author, Author::class)();
             /*
              * The affiliation history is an array which itself contains assoc arrays. These contain incomplete(!) data
@@ -172,7 +179,7 @@ class AuthorAffiliationFetcher
                 }
             }
             return $affiliations_ids;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return array();
         }
     }

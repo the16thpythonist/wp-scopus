@@ -7,6 +7,7 @@
  */
 
 namespace the16thpythonist\Wordpress\Scopus;
+use Exception;
 
 /**
  * Class AuthorPostRegistration
@@ -82,6 +83,7 @@ class AuthorPostRegistration
          * fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
          */
         add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
+
     }
 
     /**
@@ -247,7 +249,7 @@ class AuthorPostRegistration
                 'type'      => $type
             );
         }
-
+        $post = new AuthorPost($post_id);
         ?>
         <p>
             Use these following input fields to enter the necessary information about the author.<br>
@@ -279,6 +281,9 @@ class AuthorPostRegistration
             website, for such a case the corresponding affiliations can be ticked as blacklist. All the related
             institutes <em>have to be manually ticked</em> as whitelisted!
         </p>
+
+        <strong id="affiliation-fetch-status">Enter a Scopus ID to start the fetch process...</strong>
+
         <div id="affiliation-wrapper">
             <div class="affiliation-caption-row">
                 <p class="first">
@@ -294,56 +299,118 @@ class AuthorPostRegistration
         </div>
 
         <script>
+
+            var fetchStatus = jQuery('#affiliation-fetch-status');
+            var affiliations_already = [];
+            var id_input = jQuery('#scopus_author_id');
+            var affiliation_wrapper = jQuery('div#affiliation-wrapper');
+
+            function getIDs() {
+                var value, ids;
+                ids = [];
+                value = id_input.attr('value');
+                if (value.includes("\n")) {
+                    ids = value.split("\n");
+                } else {
+                    ids.push(value);
+                }
+                return ids;
+            }
+
             function fetchAffiliations(author_id) {
+                fetchStatus.html('Fetching currently in progress...');
+                fetchStatus.css('color', 'grey');
                 jQuery.ajax({
+                    url:        ajaxurl,
                     type:       'Get',
-                    timeout:    1000,
+                    timeout:    60000,
                     dataType:   'html',
                     async:      true,
                     data:       {
                         action:     'scopus_author_fetch_affiliations',
                         author_id:  author_id
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        fetchStatus.html('All Affiliations fetched!');
+                        fetchStatus.css('color', 'green');
+                    },
+                    error: function(response) {
+                        console.log(response);
+                        fetchStatus.html('There was an error fetching the publications');
+                        fetchStatus.css('color', 'red');
                     }
-                    success: function(response) {}
                 })
             }
 
-            var affiliations_already = [];
-
             function updateAffiliations() {
-                var author_id = jQuery('#scopus_author_id').attr('value');
-                var affiliation_wrapper = jQuery('div#affiliation-wrapper');
+                var names = getFilenames();
+                //console.log(names);
+                names.forEach(function (name) {
+                    try {
+                        var data = readDataPost(name);
+                        //console.log(data);
+                        var affiliations = JSON.parse(data);
 
-                try {
-                    var data = readDataPost('affiliations_author_' + author_id + '.json');
-                    var affiliations = JSON.parse(data);
+                        var keys = Object.keys(affiliations);
+                        var difference = keys.filter(x => !affiliations_already.includes(x));
 
-                    var keys = affiliations.keys();
-                    var difference = keys.filter(x => !affiliations_already.includes(x));
-
-                    var key, value, whitelist_checked, blacklist_checked;
-                    for (key in difference) {
-                        var array = affiliations[key];
-                        if (value['whitelist'] === true) { whitelist_checked = ' checked'; } else { whitelist_checked = ''; }
-                        if (value['blacklist'] === true) { blacklist_checked = ' checked'; } else { blacklist_checked = ''; }
-                        var checkbox_whitelist_string = '<input type="checkbox" name="whitelist-' + key + '" value="1"' + whitelist_checked +'>';
-                        var checkbox_blacklist_string = '<input type="checkbox" name="blacklist-' + key + '" value="1"' + blacklist_checked +'>';
-                        var description_string = '<p class="first">' + key + ': ' + value['name'] + '</p>';
-                        var html_string = '<div class="affiliation-row">' + description_string + checkbox_whitelist_string + checkbox_blacklist_string + '</div>';
-                        var row_element = jQuery(jQuery.parseHTML(html_string));
-                        row_element.appendTo(affiliation_wrapper);
+                        var value, whitelist_checked, blacklist_checked;
+                        difference.forEach(function (key) {
+                            console.log(key);
+                            value = affiliations[key];
+                            if (value['whitelist'] === true) { whitelist_checked = ' checked'; } else { whitelist_checked = ''; }
+                            if (value['blacklist'] === true) { blacklist_checked = ' checked'; } else { blacklist_checked = ''; }
+                            var checkbox_whitelist_string = '<input type="checkbox" name="whitelist-' + key + '" value="1"' + whitelist_checked +'>';
+                            var checkbox_blacklist_string = '<input type="checkbox" name="blacklist-' + key + '" value="1"' + blacklist_checked +'>';
+                            var description_string = '<p class="first">' + key + ': ' + value['name'] + '</p>';
+                            var html_string = '<div class="affiliation-row">' + description_string + checkbox_whitelist_string + checkbox_blacklist_string + '</div>';
+                            var row_element = jQuery(jQuery.parseHTML(html_string));
+                            row_element.appendTo(affiliation_wrapper);
+                            affiliations_already.push(key);
+                        });
+                    } catch (err) {
+                        console.log(err);
                     }
-                } catch (err) {
-                    console.log(error);
-                }
+                });
 
-                updateAffiliations();
+                setTimeout(updateAffiliations, 1000);
             }
 
-            var id_input = jQuery('#scopus_author_id');
+            function deleteData() {
+                var names = getFilenames();
+                names.forEach(function (name) {
+                    deleteDataPost(name);
+                });
+            }
+
+            function getFilenames() {
+                var ids = getIDs();
+                var names = [];
+                var name;
+                ids.forEach(function (id) {
+                    name = 'affiliations_author_' + id + '.json';
+                    names.push(name);
+                });
+                return names;
+            }
+
+            // If there already is content in the Scopus ID input field at page load, then the fetch Affiliations will
+            // be triggered automatically. But first the Data from the previous fetch has to be deleted
+            if (id_input.attr('value') !== '') {
+                deleteData();
+                var ids = getIDs();
+                console.log(ids);
+                ids.forEach(function (id) {
+                    fetchAffiliations(id);
+                });
+            }
+
             id_input.on('focusout', function () {
-                var value = id_input.attr('value');
-                fetchAffiliations(value);
+                var ids = getIDs();
+                ids.forEach(function (id) {
+                    fetchAffiliations(id)
+                });
             });
             updateAffiliations();
         </script>
@@ -362,11 +429,16 @@ class AuthorPostRegistration
     public function ajaxFetchAffiliations() {
         if (array_key_exists('author_id', $_GET)) {
             $author_id = $_GET['author_id'];
-
-            $fetcher = new AuthorAffiliationFetcher();
-            $fetcher->set($author_id);
-            $fetcher->fetchAffiliations();
+            echo $author_id;
+            try {
+                $fetcher = new AuthorAffiliationFetcher();
+                $fetcher->set($author_id);
+                $fetcher->fetchAffiliations();
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
         }
+        die();
     }
 
 }

@@ -1,0 +1,27 @@
+/*
+These are the style rules, which make the affiliation listing in the
+Edit Author menu display as a list.
+
+CHANGELOG
+
+Added 03.09.2018
+ */
+div#affiliation-wrapper>div {
+    display: flex;
+    flex-direction: column;
+    /* background-color: green; */
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+div#affiliation-wrapper>div>p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+div#affiliation-wrapper>div>input {
+    margin-top:0px;
+    flex-basis: 0% !important;
+    margin-right: 15%;
+    margin-left: 2%
+}
