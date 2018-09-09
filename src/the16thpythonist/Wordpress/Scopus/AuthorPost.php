@@ -10,6 +10,9 @@ namespace the16thpythonist\Wordpress\Scopus;
 
 use BrowscapPHP\Exception\FileNotFoundException;
 use Scopus\ScopusApi;
+use Scopus\Response\Abstracts;
+use Scopus\Response\AbstractAuthor;
+
 
 /**
  * Class AuthorPost
@@ -24,19 +27,71 @@ use Scopus\ScopusApi;
  */
 class AuthorPost
 {
+    /**
+     * @var string $POST_TYPE   The string name under which the author post type is registered in wordpress.
+     *                          The name can be chosen when the static method "register" is called.
+     */
     public static $POST_TYPE;
+
+    /**
+     * @var AuthorPostRegistration $REGISTRATION    The object used to register the author post type in wordpress
+     */
     public static $REGISTRATION;
 
+    /**
+     * @var string $post_id The wordpress post ID of the post, around which this wrapper is built
+     */
     public $post_id;
+
+    /**
+     * @var array|null|\WP_Post The actual WP_Post object of the post around which this wrapper revolves
+     */
     public $post;
 
+    /**
+     * @var string  The first name of the author
+     */
     public $first_name;
+
+    /**
+     * @var string  The last name of the author
+     */
     public $last_name;
+
+    /**
+     * @var array   An array of all the scopus author IDs associated with the author.
+     */
     public $author_ids;
+
+    /**
+     * @var array   An array of all the string category names for which this authors publications qualify
+     */
     public $categories;
+
+    /**
+     * @var array   An array of the string scopus affiliation ids for all the whitelisted affiliations. Whitelisted
+     *              affiliation means, that every publication of the author, that contains this affiliation will be
+     *              posted in the wordpress system.
+     */
     public $scopus_blacklist;
+
+    /**
+     * @var array   An array of the string scopus affiliation ids for all the blacklisted affiliations. Blacklisted
+     *              affiliations: Every publication containing the author and this affiliation will not be posted on WP
+     */
     public $scopus_whitelist;
 
+    /**
+     * AuthorPost constructor.
+     *
+     * CHANGELOG
+     *
+     * Added 07.09.2018
+     *
+     * @since 0.0.0.0
+     *
+     * @param $post_id
+     */
     public function __construct($post_id)
     {
         $this->post_id = $post_id;
@@ -51,6 +106,41 @@ class AuthorPost
         $this->categories = $this->loadMeta('categories', false);
         $this->scopus_blacklist = $this->loadMeta('scopus_blacklist', false);
         $this->scopus_whitelist = $this->loadMeta('scopus_whitelist', false);
+    }
+
+    public function checkPublication(Abstracts $publication){
+        $authors = $publication->getAuthors();
+        foreach ($authors as $author) {
+            $author_id = $author->getId();
+            if (in_array($author_id, $this->author_ids)) {
+                if( $affiliation_id = $this->publicationAuthorAffiliationID($author)) {
+                    if (in_array($affiliation_id, $this->scopus_whitelist)) {
+                        return 1;
+                    } elseif (in_array($affiliation_id, $this->scopus_blacklist)) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    return 0;
+                }
+            }
+        }
+        return 0;
+    }
+
+    private function publicationAuthorAffiliationID(AbstractAuthor $author) {
+        /*
+         * The affiliation ID of the author is not part of the values, that can be gotten from the public methods of the
+         * AbstractAuthor class. Thus it has to be gotton from the data dict directly using a closure to access the
+         * private data field.
+         */
+        $data = \Closure::bind(function (){return $this->data;}, $author, AbstractAuthor::class)();
+        if (array_key_exists('affiliation', $data) && array_key_exists('@id', $data['affiliation'])) {
+            return $data['affiliation']['@id'];
+        } else {
+            return false;
+        }
     }
 
     /**
