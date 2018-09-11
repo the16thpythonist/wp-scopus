@@ -108,6 +108,26 @@ class AuthorPost
         $this->scopus_whitelist = $this->loadMeta('scopus_whitelist', false);
     }
 
+    /**
+     * For a given publication Abstract this method will return if that pub is black/whitelisted
+     *
+     * This function is especially designed to work with the ScopusApi, as the Abstracts object used as the
+     * parameter is a return data structure of the Api object.
+     * The function will check if this author is an author of the publication and then based on the affiliation ID
+     * the author had back then, when the publication was written determine if the authors stance towards the paper
+     * is supposed to be whitelisted (1), blacklisted (-1) or undefined (0) which is also the case if the author is not
+     * an author of the publication.
+     *
+     * CHANGELOG
+     *
+     * Added 10.09.2018
+     *
+     * @since 0.0.0.0
+     *
+     * @param Abstracts $publication    The object returned by the API object as wrapper to a abstract retrieval
+     *                                  response.
+     * @return int
+     */
     public function checkPublication(Abstracts $publication){
         $authors = $publication->getAuthors();
         foreach ($authors as $author) {
@@ -129,6 +149,18 @@ class AuthorPost
         return 0;
     }
 
+    /**
+     * For a given AbstractAuthor object, this returns the affiliation ID
+     *
+     * CHANGELOG
+     *
+     * Added 10.09.2018
+     *
+     * @since 0.0.0.0
+     *
+     * @param AbstractAuthor $author
+     * @return bool
+     */
     private function publicationAuthorAffiliationID(AbstractAuthor $author) {
         /*
          * The affiliation ID of the author is not part of the values, that can be gotten from the public methods of the
@@ -188,10 +220,12 @@ class AuthorPost
         $results_remaining = true;
         $index = 0;
         while ($results_remaining){
-            $search = $api->query($search_string)->start($index)->count($index + $step)->viewStandard()->search();
+            $search = $api->query($search_string)->start($index)->count($step)->viewStandard()->search();
             $entries = $search->getEntries();
+            foreach ($entries as $entry) {
+                $ids[] = $entry->getScopusId();
+            }
             if (count($entries) < $step) {
-                array_map(function ($e) {$ids[] = $e->getScopusId(); }, $entries);
                 $results_remaining = false;
             } else {
                 $index += $step;

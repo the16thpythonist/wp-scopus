@@ -73,6 +73,73 @@ class AuthorObservatory
     }
 
     /**
+     * Fetches all scopus ids for all publications any of the authors has worked on from the authors scopus profile
+     *
+     * CHANGELOG
+     *
+     * Added 10.09.2018
+     *
+     * @since 0.0.0.0
+     *
+     * @return array
+     */
+    public function fetchScopusIDs() {
+        $ids = array();
+        /** @var AuthorPost $author */
+        foreach ($this->authors as $author) {
+            $_ids = $author->fetchScopusIDs($this->scopus_api);
+            $ids = array_merge($_ids, $ids);
+        }
+        /*
+         * Since the possibility of a few of the authors having worked on a publication together at times is very high
+         * there might be duplicates in the list, which have to be removed.
+         */
+        $ids = array_unique($ids);
+        return $ids;
+    }
+
+    /**
+     * For a given publication Abstract this method will return if that pub is black/whitelisted
+     *
+     * This function is especially designed to work with the ScopusApi, as the Abstracts object used as the
+     * parameter is a return data structure of the Api object.
+     * Based on the authors of the given publication object, this function will first evaluate which of the
+     * authors observed by this observatory were also authors of the publication and then based on these authors
+     * black and whitelists it is evaluated if the status of the publication should be blacklisted (returns -1),
+     * whitelisted (1) or unknown (0).
+     *
+     * CHANGELOG
+     *
+     * Added 10.09.2018
+     *
+     * @since 0.0.0.0
+     *
+     * @param Abstracts $publication    The object returned by the API object as wrapper to a abstract retrieval
+     *                                  response.
+     * @return int
+     */
+    public function checkPublication(Abstracts $publication) {
+        $checks = array();
+        /** @var AuthorPost $author */
+        foreach ($this->authors as $author) {
+            $checks[] = $author->checkPublication($publication);
+        }
+
+        /*
+         * If even one of the authors was explicitly whitelisted for this publication, then the publication will be
+         * valid overall, if that is not the case and one of them was blacklisted, the publication is not valid.
+         * In any other case the status is unknown.
+         */
+        if (in_array(1, $checks)) {
+            return 1;
+        } elseif (in_array(-1, $checks)) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * Returns the list of all category names of all observed authors, which are authors of the given abstract
      *
      * CHANGELOG
