@@ -13,10 +13,15 @@
     {
       "type": "vcs",
       "url": "https://github.com/the16thpythonist/wp-data-safe.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-cpt-lib.git"
     }
   ],
   "require": {
     "the16thpythonist/wp-data-safe": "@dev",
+    "the16thpythonist/wp-cpt-lib": "@dev",
     "kasparsj/scopus-search-api": "9999999-dev"
   },
   "autoload": {
