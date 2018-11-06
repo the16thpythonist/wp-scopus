@@ -1,4 +1,8 @@
+
+
 /*
+AUTHOR AFFILIATION DISPLAY
+
 These are the style rules, which make the affiliation listing in the
 Edit Author menu display as a list.
 
@@ -24,4 +28,21 @@ div#affiliation-wrapper>div>input {
     flex-basis: 0% !important;
     margin-right: 15%;
     margin-left: 2%
+}
+/*
+Changed 03.11.2018
+This container will contain all the log messages about what is going on during the fetch process of the affiliation
+ids. The container has a light grey background color and a slim border design
+
+Changed 04.11.2018
+The log container needed some margin at top and buttom to separate it from the button and the actual display more
+ */
+div#affiliation-fetch-log {
+    border-style: solid;
+    border-color: lightgrey;
+    border-width: 1px;
+    background-color: #e9e9e9;
+    padding: 5px;
+    margin-top: 10px;
+    margin-bottom: 5px;
 }

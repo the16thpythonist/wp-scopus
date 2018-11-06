@@ -28,7 +28,6 @@ class WpScopus
         'author'
     );
 
-    public static $AUTHOR_POST_TYPE;
     public static $API_KEY;
 
     /**

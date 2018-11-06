@@ -11,6 +11,7 @@ namespace the16thpythonist\Wordpress\Scopus;
 use WP_Query;
 use Scopus\ScopusApi;
 use Scopus\Response\Abstracts;
+use Log\VoidLog;
 
 
 /**
@@ -42,6 +43,8 @@ class AuthorObservatory
      */
     public $scopus_api;
 
+    public $log;
+
     /**
      * AuthorObservatory constructor.
      *
@@ -49,12 +52,20 @@ class AuthorObservatory
      *
      * Added 08.09.2018
      *
+     * Changed 29.10.2018
+     * Changed the method of getting all the AuthorPost objects
+     *
+     * Changed 29.10.2018
+     * Added a "log" logger attribute to the class. Which is normally set to be a VoidLog
+     *
      * @since 0.0.0.0
      */
     public function __construct()
     {
+        $this->log = new VoidLog();
+
         // Loading all the author posts and creating AuthorPost wrapper objects from them
-        $this->authors = $this->loadAuthors();
+        $this->authors = AuthorPost::getAll();
 
         // Creating a new API object
         $key = WpScopus::$API_KEY;
@@ -79,16 +90,23 @@ class AuthorObservatory
      *
      * Added 10.09.2018
      *
+     * Changed 29.10.2018
+     * Added log messages
+     *
      * @since 0.0.0.0
      *
      * @return array
      */
     public function fetchScopusIDs() {
+
+        $this->log->info('STARTING SCOPUS ID FETCH');
         $ids = array();
         /** @var AuthorPost $author */
         foreach ($this->authors as $author) {
             $_ids = $author->fetchScopusIDs($this->scopus_api);
+            $this->log->info(sprintf('TOTAL PUBLICATIONS "%s" FOR AUTHOR "%s"', count($_ids), $author->last_name));
             $ids = array_merge($_ids, $ids);
+
         }
         /*
          * Since the possibility of a few of the authors having worked on a publication together at times is very high
@@ -239,5 +257,20 @@ class AuthorObservatory
         $query = new WP_Query($args);
         $posts = $query->get_posts();
         return $posts;
+    }
+
+    /**
+     * Returns an array with all the scopus author ids of the observed authors.
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * @since 0.0.0.2
+     *
+     * @return array
+     */
+    public function getAuthorIDs() {
+        return array_keys($this->authors_map);
     }
 }

@@ -12,6 +12,7 @@ use BrowscapPHP\Exception\FileNotFoundException;
 use Scopus\ScopusApi;
 use Scopus\Response\Abstracts;
 use Scopus\Response\AbstractAuthor;
+use the16thpythonist\Wordpress\Base\PostPost;
 
 
 /**
@@ -25,7 +26,7 @@ use Scopus\Response\AbstractAuthor;
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
-class AuthorPost
+class AuthorPost extends PostPost
 {
     /**
      * @var string $POST_TYPE   The string name under which the author post type is registered in wordpress.
@@ -42,6 +43,11 @@ class AuthorPost
      * @var string $post_id The wordpress post ID of the post, around which this wrapper is built
      */
     public $post_id;
+
+    /**
+     * @var string $ID The wordpress post ID of the author post;
+     */
+    public $ID;
 
     /**
      * @var array|null|\WP_Post The actual WP_Post object of the post around which this wrapper revolves
@@ -81,12 +87,25 @@ class AuthorPost
      */
     public $scopus_whitelist;
 
+    const DEFAULT_INSERT = array(
+        'first_name'        => '',
+        'last_name'         => '',
+        'ids'               => array(),
+        'categories'        => array(),
+        'blacklist'         => array(),
+        'whitelist'         => array()
+    );
+
     /**
      * AuthorPost constructor.
      *
      * CHANGELOG
      *
      * Added 07.09.2018
+     *
+     * Changed 28.10.2018
+     * Added the field ID and assigned it the wordpress post id in the constructor. This is to keep all the wrapper
+     * objects sort the same
      *
      * @since 0.0.0.0
      *
@@ -95,6 +114,7 @@ class AuthorPost
     public function __construct($post_id)
     {
         $this->post_id = $post_id;
+        $this->ID = $post_id;
         $this->post = get_post($post_id);
 
         /*
@@ -349,17 +369,51 @@ class AuthorPost
      *
      * Added 30.08.2018
      *
-     * @param string $post_type
+     * Changed 20.10.2018
+     * Added the additional argument "class", to make this class match the "PostWrapper" Interface.
+     *
+     * @param string $post_type The string name, the post type is supposed to have
+     * @param string $class     The string class name of the Registration object to be executed to register this PT
      *
      * @since 0.0.0.0
      */
-    public static function register(string $post_type) {
+    public static function register(string $post_type, string $class=AuthorPostRegistration::class) {
         static::$POST_TYPE = $post_type;
 
-        $registration = new AuthorPostRegistration($post_type);
+        /** @var AuthorPostRegistration $registration */
+        $registration = new $class($post_type);
         $registration->register();
 
         static::$REGISTRATION = $registration;
+    }
+
+    /**
+     * Returns an array with AuthorPost wrapper objects for every author post currently on the website
+     *
+     * CHANGELOG
+     *
+     * Added 23.10.2018
+     *
+     * @since 0.0.0.2
+     *
+     * @return array
+     */
+    public static function getAll() {
+
+        // The query will get all the author posts
+        $args = array(
+            'post_type'         => self::$POST_TYPE,
+            'post_status'       => 'publish',
+            'posts_per_page'    => -1
+        );
+        $query = new \WP_Query($args);
+        $posts = $query->get_posts();
+
+        // We will create a function, which takes a post and generates a new AuthorPost wrapper from it and then
+        // map this function onto the whole list of posts just loaded by the query
+        $cb = function($post) { return new AuthorPost($post->ID); };
+
+        return array_map($cb, $posts);
     }
 
     /**
@@ -430,5 +484,80 @@ class AuthorPost
         );
         $query = new \WP_Query($args);
         return $query;
+    }
+
+    /**
+     * Returns whether the "author" post type has been registered in wordpress already
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * @since 0.0.0.2
+     *
+     * @return bool
+     */
+    public static function isRegistered() {
+        return post_type_exists(self::$POST_TYPE);
+    }
+
+    /**
+     * Inserts a new author post into wordpress
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * @since 0.0.0.2
+     *
+     * @param array $args   The arguments
+     *
+     * @return string
+     */
+    public static function insert($args) {
+        // Here we use the default argument array as a foundation, but replace all the fields, that are actually
+        // specified by the given arguments, with the "real" values.
+        $args = array_replace(self::DEFAULT_INSERT, $args);
+
+        // The full name in the format "{last name}, {first name}" will be used as the title of the author post
+        $full_name = sprintf('%s, %s', $args['last_name'], $args['first_name']);
+
+        // Here the arguments array for the post insertion gets prepared. The multiple meta values are being inserted
+        // as comma separated values due to a bad design choice, where they are saved as csv string within the meta
+        // field and when loading it is expected they have that format.
+        $postarr = array(
+            'post_type'         => self::$POST_TYPE,
+            'post_status'       => 'publish',
+            'post_title'        => $full_name,
+            'post_content'      => '',
+            'meta_input'        => array(
+                'first_name'        => $args['first_name'],
+                'last_name'         => $args['last_name'],
+                'scopus_author_id'  => implode(',', $args['ids']),
+                'categories'        => implode(',', $args['categories']),
+                'scopus_whitelist'  => implode(',', $args['whitelist']),
+                'scopus_blacklist'  => implode(',', $args['blacklist'])
+            )
+        );
+        $wp_id = wp_insert_post($postarr);
+        return $wp_id;
+    }
+
+    /**
+     * Deletes all the author posts, that are currently in the system
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * @since 0.0.0.2
+     */
+    public static function removeAll() {
+
+        $author_posts = self::getAll();
+        /** @var AuthorPost $author_post */
+        foreach ($author_posts as $author_post) {
+            wp_delete_post($author_post->ID);
+        }
     }
 }

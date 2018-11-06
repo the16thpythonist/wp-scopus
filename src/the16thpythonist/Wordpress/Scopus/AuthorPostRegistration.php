@@ -7,7 +7,11 @@
  */
 
 namespace the16thpythonist\Wordpress\Scopus;
+
 use Exception;
+use the16thpythonist\Wordpress\Base\PostRegistration;
+use the16thpythonist\Wordpress\Functions\PostUtil;
+
 
 /**
  * Class AuthorPostRegistration
@@ -18,7 +22,7 @@ use Exception;
  *
  * @since 0.0.0.0
  */
-class AuthorPostRegistration
+class AuthorPostRegistration implements PostRegistration
 {
     const PHP_NEWLINE = "\r\n";
     const HTML_NEWLINE = '&#13;&#10;';
@@ -62,6 +66,20 @@ class AuthorPostRegistration
     {
         $this->label = $label;
         $this->post_type = $post_type;
+    }
+
+    /**
+     * Returns the string post type name that is used to register the post type
+     *
+     * CHANGELOG
+     *
+     * Added 20.10.2018
+     *
+     * @return string
+     */
+    public function getPostType()
+    {
+        return $this->post_type;
     }
 
     /**
@@ -115,6 +133,15 @@ class AuthorPostRegistration
      *
      * Added 30.08.2018
      *
+     * Changed 20.10.2018
+     * Changed the if statement, that checks for the post type to use a function, which also checks if the saving process
+     * is actually happening over the wordpress backend, as there was an error caused when the 'wp_insert_post' function
+     * was called.
+     *
+     * Changed 28.10.2018
+     * Made the function quit in case the post was not saved via the editor, but by the wp_insert_post function from
+     * within the code
+     *
      * @since 0.0.0.0
      *
      * @param $post_id
@@ -129,7 +156,14 @@ class AuthorPostRegistration
          * the button has been pressed on the post edit page, which means the $_POST array contains all the relevant
          * information of the post.
          */
-        if ('author' !== $_POST['post_type']) {
+        if (!PostUtil::isSavingPostType($this->post_type, $post_id)) {
+            return $post_id;
+        }
+
+        // So this on save hook gets also invoked, when a new post is being inserted using the 'wp_insert_post'
+        // function from the code and in this case there obviously is no information in the POST array.
+        // In such a case however the values are being saved correctly as an array already.
+        if (!array_key_exists('first_name', $_POST)) {
             return $post_id;
         }
 
@@ -161,6 +195,7 @@ class AuthorPostRegistration
          * their array entry. The key being the key also used in $META_FIELDS
          */
         foreach (self::$META_FIELDS as $key => $label) {
+
             if (self::$META_SINGLE[$key] === true) {
                 $value = $_POST[$key];
             } else {
@@ -169,9 +204,11 @@ class AuthorPostRegistration
                  * are being displayed and entered as being in new lines. For saving the list as a meta value, it is
                  * being converted into a csv string.
                  */
+
                 $value = str_replace(self::PHP_NEWLINE, ',', $_POST[$key]);
             }
             update_post_meta($post_id, $key, $value);
+
         }
 
         /*
@@ -274,6 +311,8 @@ class AuthorPostRegistration
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <h3>Author affiliations</h3>
         <p>
             After entering the scopus author id, the sever performs a search about all the institutes the author has
             been affiliated with over time, according to the scopus database. <br>
@@ -282,12 +321,16 @@ class AuthorPostRegistration
             institutes <em>have to be manually ticked</em> as whitelisted!
         </p>
 
-        <strong id="affiliation-fetch-status">Enter a Scopus ID to start the fetch process...</strong>
+        <button id="update-affiliations">Update Affiliations</button>
+
+        <div id="affiliation-fetch-log">
+            <strong>Affiliation retrieval Log</strong>
+        </div>
 
         <div id="affiliation-wrapper">
             <div class="affiliation-caption-row">
                 <p class="first">
-                    Affiliation name
+                    <em>Affiliation Name</em>
                 </p>
                 <p>
                     whitelisted
@@ -299,120 +342,24 @@ class AuthorPostRegistration
         </div>
 
         <script>
+            // First we need to load the script, which contains all the necessary functions.
+            // The actual code for the affiliation display only gets executed once the script is loaded
+            jQuery.getScript("<?php echo plugin_dir_url(__FILE__); ?>scopus-author.js", function () {
 
-            var fetchStatus = jQuery('#affiliation-fetch-status');
-            var affiliations_already = [];
-            var id_input = jQuery('#scopus_author_id');
-            var affiliation_wrapper = jQuery('div#affiliation-wrapper');
+                // Running if the script is loaded properly
+                if (id_input.attr('value') !== '') {
+                    //deleteData();
+                    let ids = getIDs();
+                    console.log(ids);
+                    ids.forEach(function (id) {
+                        // fetchAffiliations(id);
+                    });
 
-            function getIDs() {
-                var value, ids;
-                ids = [];
-                value = id_input.attr('value');
-                if (value.includes("\n")) {
-                    ids = value.split("\n");
-                } else {
-                    ids.push(value);
+                    // Loading all the affiliation IDs from the server
+                    updateAffiliations(true);
                 }
-                return ids;
-            }
+            })
 
-            function fetchAffiliations(author_id) {
-                fetchStatus.html('Fetching currently in progress...');
-                fetchStatus.css('color', 'grey');
-                jQuery.ajax({
-                    url:        ajaxurl,
-                    type:       'Get',
-                    timeout:    60000,
-                    dataType:   'html',
-                    async:      true,
-                    data:       {
-                        action:     'scopus_author_fetch_affiliations',
-                        author_id:  author_id
-                    },
-                    success: function(response) {
-                        console.log(response);
-                        fetchStatus.html('All Affiliations fetched!');
-                        fetchStatus.css('color', 'green');
-                    },
-                    error: function(response) {
-                        console.log(response);
-                        fetchStatus.html('There was an error fetching the publications');
-                        fetchStatus.css('color', 'red');
-                    }
-                })
-            }
-
-            function updateAffiliations() {
-                var names = getFilenames();
-                //console.log(names);
-                names.forEach(function (name) {
-                    try {
-                        var data = readDataPost(name);
-                        //console.log(data);
-                        var affiliations = JSON.parse(data);
-
-                        var keys = Object.keys(affiliations);
-                        var difference = keys.filter(x => !affiliations_already.includes(x));
-
-                        var value, whitelist_checked, blacklist_checked;
-                        difference.forEach(function (key) {
-                            console.log(key);
-                            value = affiliations[key];
-                            if (value['whitelist'] === true) { whitelist_checked = ' checked'; } else { whitelist_checked = ''; }
-                            if (value['blacklist'] === true) { blacklist_checked = ' checked'; } else { blacklist_checked = ''; }
-                            var checkbox_whitelist_string = '<input type="checkbox" name="whitelist-' + key + '" value="1"' + whitelist_checked +'>';
-                            var checkbox_blacklist_string = '<input type="checkbox" name="blacklist-' + key + '" value="1"' + blacklist_checked +'>';
-                            var description_string = '<p class="first">' + key + ': ' + value['name'] + '</p>';
-                            var html_string = '<div class="affiliation-row">' + description_string + checkbox_whitelist_string + checkbox_blacklist_string + '</div>';
-                            var row_element = jQuery(jQuery.parseHTML(html_string));
-                            row_element.appendTo(affiliation_wrapper);
-                            affiliations_already.push(key);
-                        });
-                    } catch (err) {
-                        console.log(err);
-                    }
-                });
-
-                setTimeout(updateAffiliations, 1000);
-            }
-
-            function deleteData() {
-                var names = getFilenames();
-                names.forEach(function (name) {
-                    deleteDataPost(name);
-                });
-            }
-
-            function getFilenames() {
-                var ids = getIDs();
-                var names = [];
-                var name;
-                ids.forEach(function (id) {
-                    name = 'affiliations_author_' + id + '.json';
-                    names.push(name);
-                });
-                return names;
-            }
-
-            // If there already is content in the Scopus ID input field at page load, then the fetch Affiliations will
-            // be triggered automatically. But first the Data from the previous fetch has to be deleted
-            if (id_input.attr('value') !== '') {
-                deleteData();
-                var ids = getIDs();
-                console.log(ids);
-                ids.forEach(function (id) {
-                    fetchAffiliations(id);
-                });
-            }
-
-            id_input.on('focusout', function () {
-                var ids = getIDs();
-                ids.forEach(function (id) {
-                    fetchAffiliations(id)
-                });
-            });
-            updateAffiliations();
         </script>
         <?php
     }
