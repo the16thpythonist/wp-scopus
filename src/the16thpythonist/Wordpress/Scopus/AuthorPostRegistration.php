@@ -380,12 +380,12 @@ class AuthorPostRegistration implements PostRegistration
             try {
                 $fetcher = new AuthorAffiliationFetcher();
                 $fetcher->set($author_id);
-                $fetcher->fetchAffiliations();
+                var_export($fetcher->fetchAffiliations());
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
         }
-        die();
+        wp_die();
     }
 
 }

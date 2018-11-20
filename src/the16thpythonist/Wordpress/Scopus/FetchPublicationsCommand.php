@@ -12,10 +12,20 @@ use the16thpythonist\Command\Command;
 
 class FetchPublicationsCommand extends Command
 {
+
+    public $params = array(
+        'older_than'    => '01-01-2010'
+    );
+
     protected function run(array $args)
     {
         $this->log->info('CREATING THE FETCHER OBJECT');
-        $fetcher = new PublicationFetcher(array(), $this->log);
+        $this->log->info(sprintf('...Fetching only publications older than "%s"', $args['older_than']));
+
+        $fetcher_config = array(
+            'date_limit'    => $args['older_than']
+        );
+        $fetcher = new PublicationFetcher($fetcher_config, $this->log);
         iterator_to_array($fetcher->next());
     }
 }

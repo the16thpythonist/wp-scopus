@@ -106,6 +106,7 @@ class AuthorAffiliationFetcher
         $affiliations = array();
 
         $affiliation_ids = $this->fetchAffiliationIDs();
+        var_export($affiliation_ids);
 
         foreach ($affiliation_ids as $affiliation_id) {
             try {
@@ -134,7 +135,7 @@ class AuthorAffiliationFetcher
             // Overrides the results file with the new array, which contains one result more
             $this->file->save($affiliations);
         }
-        var_export($affiliations);
+        //var_export($affiliations);
         return $affiliations;
     }
 
@@ -152,7 +153,7 @@ class AuthorAffiliationFetcher
     private function fetchAffiliationIDs() {
         try {
             $author = $this->scopus_api->retrieveAuthor($this->author_id);
-
+            var_export($author);
             /*
              * The Scopus Api package saves the entire JSON array returned by the scopus website inside the protected
              * data field of each object, but only has a few getter methods defined for accessing this data.
@@ -162,6 +163,7 @@ class AuthorAffiliationFetcher
                 return $this->data;
             };
             $data = \Closure::bind($closure, $author, Author::class)();
+            var_export($data);
             /*
              * The affiliation history is an array which itself contains assoc arrays. These contain incomplete(!) data
              * about all the institutes the author has ever been affiliated with. The information sometimes(!)
@@ -169,6 +171,7 @@ class AuthorAffiliationFetcher
              * the complete info.
              */
             $affiliation_history = $data['affiliation-history']['affiliation'];
+            var_export($affiliation_history);
             $affiliations_ids = array();
             foreach ($affiliation_history as $affiliation) {
                 try {
@@ -180,6 +183,7 @@ class AuthorAffiliationFetcher
             }
             return $affiliations_ids;
         } catch (Exception $e) {
+            echo $e->getMessage();
             return array();
         }
     }

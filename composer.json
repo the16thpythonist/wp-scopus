@@ -2,7 +2,7 @@
   "name": "the16thpythonist/wp-scopus",
   "description": "Adding various post types to Wordpress to enable scopus publication support",
   "type": "library",
-  "version": "0.0.0.0",
+  "version": "0.0.0.3",
   "authors": [
     {
       "name": "Jonas Teufel",
@@ -17,11 +17,16 @@
     {
       "type": "vcs",
       "url": "https://github.com/the16thpythonist/wp-cpt-lib.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/kitopen-api.git"
     }
   ],
   "require": {
     "the16thpythonist/wp-data-safe": "@dev",
     "the16thpythonist/wp-cpt-lib": "@dev",
+    "the16thpythonist/kitopen-api": "@dev",
     "kasparsj/scopus-search-api": "9999999-dev"
   },
   "autoload": {

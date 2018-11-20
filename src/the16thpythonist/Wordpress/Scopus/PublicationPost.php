@@ -8,6 +8,7 @@
 
 namespace the16thpythonist\Wordpress\Scopus;
 
+use the16thpythonist\KITOpen\KITOpenApi;
 use the16thpythonist\Wordpress\Base\PostPost;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
@@ -210,6 +211,68 @@ class PublicationPost extends PostPost
         // post, identified by its wordpress post id.
         // So here we just call this utility function with the wordpress post id, currently described by wrapper object
         self::addAuthorToPublication($this->ID, $author_name, $author_id);
+    }
+
+    /**
+     * Returns whether or not a KITOpen (journal) entry exists for this publication
+     *
+     * CHANGELOG
+     *
+     * Added 20.11.2018
+     *
+     * @return bool
+     */
+    public function isKITOpen() {
+        return metadata_exists('post', $this->ID, 'kitopen');
+    }
+
+    /**
+     * The KITOpen ID of this
+     *
+     * CHANGELOG
+     *
+     * Added 20.11.2018
+     *
+     * @throws \Exception If this publication doesnt have a KIT Open entry
+     *
+     * @return mixed
+     */
+    public function getKITOpenID() {
+        if ( !$this->isKITOpen() ) {
+            throw new \Exception('This Publication has no KIT Open ID !');
+        }
+
+        return PostUtil::loadSinglePostMeta($this->ID, 'kitopen');
+    }
+
+    /**
+     * The string URL to the KITOpen page of this publication
+     *
+     * CHANGELOG
+     *
+     * Added 20.11.2018
+     *
+     * @return string
+     */
+    public function getKITOpenURL() {
+
+        // Getting the KIT Open id
+        $id = $this->getKITOpenID();
+        return KITOpenApi::getPublicationURL($id);
+    }
+
+    /**
+     * Based on the DOI of the publication object, this will return the URL to the doi.org page of that specific
+     * publication
+     *
+     * CHANGELOG
+     *
+     * Added 20.11.2018
+     *
+     * @return string
+     */
+    public function getURL() {
+        return 'http://dx.doi.org/' . $this->doi;
     }
 
     /**

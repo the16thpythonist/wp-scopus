@@ -86,6 +86,7 @@ function fetchAffiliations(author_id) {
             author_id:  author_id
         },
         success: function(response) {
+            console.log(response);
             logStatus(`...All affiliations for "${author_id}" fetched!`, 'green');
         },
         error: function(response) {

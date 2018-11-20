@@ -11,7 +11,7 @@
 - Added the package [wp-cpt-lib](https://github.com/the16thpythonist/wp-cpt-lib.git) To the composer requirements. It is 
 essentially a base package for introducing new custom post types in a very object oriented way.
 
-## 06.11.2018 - 0.0.0.2
+### 06.11.2018 - 0.0.0.2
 
 Major update
 - Added the "PublicationPost" post type, which is a wrapper to describe scopus publications themselves
@@ -20,4 +20,10 @@ implements a background command, that will automatically post new publications t
 authors
 - Added the author metrics, which introduces a new shortcode, that will show an animated force graph about the 
 publication frequency and the collaborations of the observed authors
+
+### 20.11.2018 - 0.0.0.3
+
+- Added the UpdateKITOpenCommand, which will add a reference to the KITOpen page to all the posts possible
+- Extended the PublicationPost with methods for accessing the KITOpen ID and URL
+- Added Parameter support for the FetchPublicationsCommand
 
