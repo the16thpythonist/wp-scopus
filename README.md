@@ -17,7 +17,7 @@ The result will be fresh posts about all the new publications with category, tit
 
 Before you get frustrated along the way, I want to warn you now. The installation won't be all "plug & play". Since the 
 plugin is not *yet* on the official Wordpress repository, you will have to install it by doing a little bit of coding 
-yourself. But if you are not up to that keep, checking on the project, as I am working on creating an *official plugin* 
+yourself. But if you dont want that, keep checking on the project, as I am busy working on creating an *official plugin* 
 to provide the best experience!
 
 ### Prerequisites
@@ -52,7 +52,7 @@ Here is an example series of terminal commands to achieve this: (assuming the st
 
 ```shell
 cd /var/www/html/wordpress/wp-content/plugins
-mkdir woscopus
+mkdir wpscopus
 cd wpscopus
 touch composer.json
 touch wpscopus.php
