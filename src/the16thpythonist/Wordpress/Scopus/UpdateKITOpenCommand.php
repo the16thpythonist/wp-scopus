@@ -22,6 +22,9 @@ use the16thpythonist\Wordpress\Functions\PostUtil;
  *
  * Added 20.11.2018
  *
+ * Changed 05.12.2018
+ * Renamed the parameter 'newer_than' to 'more_recent_than'
+ *
  * @package the16thpythonist\Wordpress\Scopus
  */
 class UpdateKITOpenCommand extends Command
@@ -50,7 +53,7 @@ class UpdateKITOpenCommand extends Command
      * @var array $params
      */
     public $params = array(
-        'newer_than'        => '2012'
+        'more_recent_than'        => '2012'
     );
 
     /**
