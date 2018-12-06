@@ -37,12 +37,6 @@
       "url": "https://github.com/the16thpythonist/wp-cpt-lib.git"
     }
   ],
-  "authors": [
-    {
-      "name": "Jonas Teufel",
-      "email": "jonseb1998@gmail.com"
-    }
-  ],
   "require": {
     "the16thpythonist/wp-cpt-lib": "@dev",
     "the16thpythonist/wp-pi-logging": "@dev",
