@@ -224,7 +224,7 @@ class AuthorPostRegistration implements PostRegistration
             // The title will be the last name first and then the given name, separated by a comma
             $title = $last_name . ', ' . $first_name;
             $where = array('ID' => $post_id);
-            $wpdb->update($wpdb->posts, array('post_title'), $where);
+            $wpdb->update($wpdb->posts, array('post_title' => $title), $where);
         }
     }
 

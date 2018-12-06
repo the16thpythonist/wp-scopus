@@ -143,5 +143,7 @@ publication frequency and the collaborations of the observed authors
 ### 0.0.0.4 - 06.12.2018
 
 - Wrote the Readme with install instructions
+- Fixed a display bug with the flex layout of the author affiliation list
+- Fixed an issue with the title for author profiles not being set correctly
 
 
