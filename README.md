@@ -65,16 +65,55 @@ paste this into your *composer.json*:
 {
   "name": "WpScopus Plugin",
   "description": "A wordpress app for scientific publications",
+  "version": "0.0.1",
   "type": "project",
-  "repositories": [
+  "repositories":[
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-pi-logging.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-scopus-collaboration-checker.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/kitopen-api.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/indico-api.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp_commands.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-data-safe.git"
+    },
     {
       "type": "vcs",
       "url": "https://github.com/the16thpythonist/wp-scopus.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/the16thpythonist/wp-cpt-lib.git"
     }
   ],
-  "require": {
-    "the16thpythonist/wp-scopus": "@dev"
-  }
+  "require":
+  {
+    "the16thpythonist/wp-cpt-lib": "@dev",
+    "the16thpythonist/wp-pi-logging": "@dev",
+    "the16thpythonist/scopus-collaboration-checker": "@dev",
+    "the16thpythonist/kitopen-api": "@dev",
+    "the16thpythonist/indico-api": "@dev",
+    "the16thpythonist/wp-commands": "@dev",
+    "the16thpythonist/wp-data-safe": "@dev",
+    "the16thpythonist/wp-scopus": "@dev",
+    "kasparsj/scopus-search-api":"9999999-dev"
+  },
+  "minimum-stability": "dev"
 }
 ```
 
