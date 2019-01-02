@@ -12,6 +12,15 @@ use Log\LogPost;
 use the16thpythonist\Wordpress\Data\DataPost;
 use the16thpythonist\Wordpress\WpCommands;
 
+/**
+ * Class WpScopusRegistration
+ *
+ * CHANGELOG
+ *
+ * Added 18.10.2018
+ *
+ * @package the16thpythonist\Wordpress\Scopus
+ */
 class WpScopusRegistration
 {
 
@@ -68,12 +77,16 @@ class WpScopusRegistration
     public function registerCommands() {
         GenerateAuthorMetricsCommand::register('generate-author-metrics');
         FetchPublicationsCommand::register('fetch-scopus-publications');
-        DeletePublicationsCommand::register('delete-all-publications');
+        UpdatePublicationsCommand::register('update-scopus-publications');
         UpdateKITOpenCommand::register('update-kitopen');
     }
 
     /**
      * Registers all the shortcodes to be provided by the scopus plugin
+     *
+     * CHANGELOG
+     *
+     * Added 23.10.2018
      */
     public function registerShortcodes() {
         $metrics = new AuthorMetricsShortcode('author-metrics');

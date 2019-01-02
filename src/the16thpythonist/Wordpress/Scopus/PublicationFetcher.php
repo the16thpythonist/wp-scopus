@@ -32,6 +32,15 @@ class PublicationFetcher
     // The amount of publications, that have to be fetched
     public $fetch_count;
 
+    /**
+     * CHANGELOG
+     *
+     * Added 31.12.2018
+     *
+     * @var int     The current amount of publications, that have been fetched
+     */
+    public $current_count;
+
     // The complete list of all the ids to be fetched
     public $fetch_ids;
 
@@ -62,10 +71,23 @@ class PublicationFetcher
 
     public $log;
 
+    /**
+     * This is the array, which contains the default arguments passed to the constructor of a new object in case there
+     * are none specified.
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * Changed 31.12.2018
+     * Added the 'count' argument. It specifies how many publications are supposed to be fetched. It is an integer
+     * value. In case it is a negative value that means that ALL publications possible are supposed to be fetched.
+     */
     const DEFAULT_ARGS = array(
         'date_limit'            => '2016-01-01',
         'collaboration_limit'   => 50,
-        'author_limit'          => 10
+        'author_limit'          => 10,
+        'count'                 => -1
     );
 
     /**
@@ -149,6 +171,11 @@ class PublicationFetcher
      * If a publication is from an unknown collaboration, it will get posted as a draft and needs to be revisited to
      * determine, which collaboration it is.
      *
+     * Changed 31.12.2018
+     * The current_count attribute now saves how many publications have already been inserted into the system and if
+     * given a count value during the creation of the fetcher object, the loop will exit after that many publications
+     * were inserted.
+     *
      * @since 0.0.0.2
      *
      * @return \Generator
@@ -157,6 +184,14 @@ class PublicationFetcher
 
         $this->log->info('STARTING TO FETCH PUBLICATIONS');
         foreach ($this->fetch_ids as $scopus_id) {
+
+            // 31.12.2018
+            // In case the given count value is negative (usually -1) all publications will be inserted. Otherwise if
+            // the current count exceeds the count value the loop will terminate
+            if ( !($this->args['count'] < 0) && $this->args['count'] == $this->current_count ) {
+                $this->log->info(sprintf('Loop terminated after fetching "%s" pubs.', $this->current_count));
+                break;
+            }
 
             // 30.10.2018
             // Before we request the publication from the scopus database, we check if the publication cache contains
@@ -215,6 +250,11 @@ class PublicationFetcher
             // Checking for the author black and white listings
             $publication_check = $this->author_observatory->checkPublication($this->abstract);
 
+            // 31.12.2018
+            // Here we extract the information of the affiliation ids for the observed authors of the publication to
+            // also save them within the PublicationPost object
+            $author_affiliations = $this->author_observatory->getAffiliationsPublication($this->abstract, TRUE);
+
             // 06.11.2018
             // Chose a stricter affiliation policy: Everything, that is not exactly whitelisted gets dismissed right
             // away.
@@ -236,25 +276,33 @@ class PublicationFetcher
             // Added a 'status' option to the argument array, which can be 'publish' or 'draft'. If there is a
             // collaboration publication, we don't want that on the site until we know which publication it is from
             // and that has to be evaluated by another script or manually at the moment.
+            // 31.12.2018
+            // Added the 'author_affiliations' argument to also be inserted.
             $args = array(
-                'title'         => $this->title,
-                'status'        => ($collaboration == 'ANY' ? 'draft' : 'publish'),
-                'abstract'      => $coredata->getDescription(),
-                'published'     => $coredata->getCoverDate(),
-                'scopus_id'     => $coredata->getScopusId(),
-                'doi'           => $coredata->getDoi(),
-                'eid'           => $this->getAbtractEid($this->abstract),
-                'issn'          => $coredata->getIssn(),
-                'journal'       => $coredata->getPublicationName(),
-                'volume'        => $coredata->getVolume(),
-                'tags'          => $this->getTags($this->abstract),
-                'authors'       => $authors,
-                'author_count'  => $author_count,
-                'categories'    => array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications')),
-                'collaboration' => $collaboration
+                'title'                 => $this->title,
+                'status'                => ($collaboration == 'ANY' ? 'draft' : 'publish'),
+                'abstract'              => $coredata->getDescription(),
+                'published'             => $coredata->getCoverDate(),
+                'scopus_id'             => $coredata->getScopusId(),
+                'doi'                   => $coredata->getDoi(),
+                'eid'                   => $this->getAbtractEid($this->abstract),
+                'issn'                  => $coredata->getIssn(),
+                'journal'               => $coredata->getPublicationName(),
+                'volume'                => $coredata->getVolume(),
+                'tags'                  => $this->getTags($this->abstract),
+                'authors'               => $authors,
+                'author_count'          => $author_count,
+                'author_affiliations'   => $author_affiliations,
+                'categories'            => array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications')),
+                'collaboration'         => $collaboration
             );
             $this->post_id = PublicationPost::insert($args);
             $this->log->info(sprintf('<a href="%s">PUBLICATION "%s"</a>',get_the_permalink($this->post_id), $this->title));
+
+            // 31.12.2018
+            // Here we are incrementing the current amount of fetched publications, only after we have successfully
+            // inserted the new publication into the system
+            $this->current_count += 1;
 
             yield $this->post_id;
         }

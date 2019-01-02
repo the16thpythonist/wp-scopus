@@ -185,4 +185,23 @@ publication frequency and the collaborations of the observed authors
 - Fixed a display bug with the flex layout of the author affiliation list
 - Fixed an issue with the title for author profiles not being set correctly
 
+### 0.0.0.5 - 02.01.2019
+
+- Added an additional meta field for the PublicationPosts: The author_affiliations are now also being saved with the 
+publication. It will be a list of the affiliation IDs of all the observed authors, so it can be tracked to which 
+institution the publications where affiliated, when they were written (at least the interesting ones being of the 
+observed authors)
+- During the fetch process the author affiliations are now also saved to the PublicationPosts
+- Added new parameters to the fetch command:
+    - count: The amount of publications to be added to the website
+    - author_count: The amount of authors to be added to each publication post
+    - collaboration_threshold: The amount of authors a publication has to have to declare it as a collaboration paper
+- Fixed an issue where the whole command would freeze, when there was a problem with fetching the publications for one 
+of the observed authors.
+- Added a "save" button in the AuthorPost edit screen, which can be used to save a new blacklist/whitelist configuration
+- Changed the DeletePublicationsCommand to UpdatePublicationsCommand, which now updates all the publications based on 
+the new affiliation white/blacklist values and a given Time period. (the delete was not necessary anyways)
+
+
+
 

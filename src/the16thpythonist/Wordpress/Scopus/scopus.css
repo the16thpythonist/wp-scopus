@@ -1,3 +1,13 @@
+/*
+WORDPRESS DASH ICON CUSTOM COLOR
+
+These are the style rules for giving the custom dash icons the color in which the whole plugin is themed.
+
+CHANGELOG
+
+Added 02.01.2019
+ */
+
 
 
 /*
@@ -32,7 +42,7 @@ div.affiliation-caption-row p {
     margin-left: 2%
 }
 
-#update-affiliations {
+.material-button {
     /* center the button within the container */
     align-self: center;
 
@@ -50,7 +60,7 @@ div.affiliation-caption-row p {
     background-color: #3ECF8E;
     color: white;
 }
-#update-affiliations:active {
+.material-button:active {
     /* Button press animation */
     background-color: #28A46C;
     border-bottom-width: 0px;

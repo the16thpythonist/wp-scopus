@@ -212,7 +212,93 @@ function getFilenames(ids) {
     return names;
 }
 
+/**
+ * Extracts the whitelist if affiliation IDs from the HTML elements of the page and returns an array with all IDs
+ *
+ * CHANGELOG
+ *
+ * Added 31.12.2018
+ *
+ * @returns {Array}
+ */
+function getWhitelist() {
+    // Here we first get all the html elements, which are checked checkboxes. This will include both the blacklist and
+    // the whitelist
+    let checked_elements = jQuery('input:checked[type=checkbox]');
+    let whitelist = [];
+    checked_elements.each(function (index, element) {
+        let element_name = element.name;
+        if (element_name.includes('whitelist')) {
+            let affiliation_id = element_name.replace('whitelist-', '');
+            whitelist.push(affiliation_id);
+        }
+    });
+    return whitelist;
+}
 
+/**
+ * Extracts the blacklist of affiliation IDs from the HTML elements of the page and returns an array with all
+ * affiliation IDs blacklisted
+ *
+ * CHANGELOG
+ *
+ * Added 31.12.2018
+ *
+ * @returns {Array}
+ */
+function getBlacklist() {
+    // Here we first get all the html elements, which are checked checkboxes. This will include both the blacklist and
+    // the whitelist
+    let checked_elements = jQuery('input:checked[type=checkbox]');
+    let blacklist = [];
+    checked_elements.each(function (index, element) {
+        let element_name = element.name;
+        if (element_name.includes('blacklist')) {
+            let affiliation_id = element_name.replace('blacklist-', '');
+            blacklist.push(affiliation_id);
+        }
+    });
+    return blacklist;
+}
+
+/**
+ * Will send a AJAX request to the server, which contains the affiliation blacklist and the whitelist for the current
+ * author and the post ID. The server will then update the new listings to the database.
+ *
+ * CHANGELOG
+ *
+ * Added 02.01.2019
+ *
+ * @param {Array} whitelist
+ * @param {Array} blacklist
+ */
+function saveAffiliations(whitelist, blacklist) {
+    // Displaying to the user, that the fetch process is starting
+    logStatus(`Saving the affiliations for post ID "${post_id}"`);
+
+    // This AJAX request will trigger a background process in the server, which will save the given blacklist and
+    // whitelist as meta values to the Post object for the given post_id
+    jQuery.ajax({
+        url:        ajaxurl,
+        type:       'Get',
+        timeout:    60000,
+        dataType:   'html',
+        async:      true,
+        data:       {
+            action:     'scopus_author_store_affiliations',
+            post_id:    post_id,
+            whitelist:  whitelist,
+            blacklist:  blacklist
+        },
+        success: function(response) {
+            console.log(response);
+            logStatus(`...Successfully saved the new blacklist/whitelist configuration!`, 'green');
+        },
+        error: function(response) {
+            logStatus(`...There was an error with SAVING for post "${post_id}"!`, 'red');
+        }
+    })
+}
 
 // Here we register the callback function for the button to update the affiliations
 let update_button = jQuery('button#update-affiliations');
@@ -234,5 +320,20 @@ update_button.on('click', function () {
 
     // This is important. Only when false is returned it will prevent the page from reloading after the button
     // has been pressed
+    return false;
+});
+
+// 31.12.2018
+// The button which will be used to save the black and white listing after checking the according checkboxes
+let save_button = jQuery('button#save-affiliations');
+save_button.on('click', function () {
+
+    // The blacklist and the whitelist will be extracted from the page and then sent to the server, so that the server
+    // can then insert these values into the database (or where ever they are supposed to be)
+    let blacklist = getBlacklist();
+    let whitelist = getWhitelist();
+    saveAffiliations(whitelist, blacklist);
+
+    // If this was true, the button would cause the whole page to be reloaded, which we obviously dont want.
     return false;
 });

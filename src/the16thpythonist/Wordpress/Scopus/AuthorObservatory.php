@@ -11,6 +11,7 @@ namespace the16thpythonist\Wordpress\Scopus;
 use WP_Query;
 use Scopus\ScopusApi;
 use Scopus\Response\Abstracts;
+use Scopus\Response\AbstractAuthor;
 use Log\VoidLog;
 
 
@@ -93,6 +94,10 @@ class AuthorObservatory
      * Changed 29.10.2018
      * Added log messages
      *
+     * Changed 31.12.2018
+     * Added a try catch block which in case of an error during getting the publication IDs for an author would print
+     * a message to the log.
+     *
      * @since 0.0.0.0
      *
      * @return array
@@ -103,9 +108,20 @@ class AuthorObservatory
         $ids = array();
         /** @var AuthorPost $author */
         foreach ($this->authors as $author) {
-            $_ids = $author->fetchScopusIDs($this->scopus_api);
-            $this->log->info(sprintf('TOTAL PUBLICATIONS "%s" FOR AUTHOR "%s"', count($_ids), $author->last_name));
-            $ids = array_merge($_ids, $ids);
+
+            $this->log->info(sprintf('FETCHING PUBLICATIONS FOR AUTHOR "%s"', $author->last_name));
+
+            // 31.12.2018
+            // Added a catch block, which would log an error. Without it there would be no indication whether or not
+            // the process failed, the log would just freeze.
+            try {
+                $_ids = $author->fetchScopusIDs($this->scopus_api);
+                $this->log->info(sprintf('...FOUND TOTAL OF "%s" PUBLICATIONS"', count($_ids)));
+                $ids = array_merge($_ids, $ids);
+            } catch (\Exception $e) {
+                $this->log->error(sprintf('THERE WAS AN ERROR WITH GETTING THE PUBLICATIONS! "%s"', $e->getMessage()));
+            }
+
 
         }
         /*
@@ -130,6 +146,10 @@ class AuthorObservatory
      *
      * Added 10.09.2018
      *
+     * Changed 31.12.2018
+     * Rewrote the method to use the affiliation extraction methods of this class and not the AuthorPost class, because
+     * extracting information from an Abstracts object is not a concern of the AuthorPost class.
+     *
      * @since 0.0.0.0
      *
      * @param Abstracts $publication    The object returned by the API object as wrapper to a abstract retrieval
@@ -137,10 +157,42 @@ class AuthorObservatory
      * @return int
      */
     public function checkPublication(Abstracts $publication) {
+
+        // 31.12.2018
+        // We get all the affiliation IDs of the observed authors, that were part of the publications and then counter
+        // check those with the blacklist and whitelist of the according AuthorPosts
+        $author_affiliations = $this->getAffiliationsPublication($publication, TRUE);
+
+        return $this->checkAuthorAffiliations($author_affiliations);
+    }
+
+    /**
+     * Based on the authors
+     * black and whitelists it is evaluated if the status of the publication should be blacklisted (returns -1),
+     * whitelisted (1) or unknown (0).
+     *
+     * CHANGELOG
+     *
+     * Added 31.12.2018
+     *
+     * @param array $author_affiliations    An array, whose keys are the author IDs of the observed authors of any
+     *                                      publication and the values being the affiliation IDs of those authors
+     *                                      during the time of publishing that publication.
+     * @return int
+     */
+    public function checkAuthorAffiliations(array $author_affiliations) {
+
         $checks = array();
-        /** @var AuthorPost $author */
-        foreach ($this->authors as $author) {
-            $checks[] = $author->checkPublication($publication);
+
+        foreach ($author_affiliations as $author_id => $affiliation_id) {
+
+            /** @var AuthorPost $author_post */
+            $author_post = $this->authors_map[$author_id];
+            if ($author_post->isBlacklist($affiliation_id)){
+                $checks[] = -1;
+            } elseif ($author_post->isWhitelist($affiliation_id)) {
+                $checks[] = 1;
+            }
         }
 
         /*
@@ -155,6 +207,90 @@ class AuthorObservatory
         } else {
             return 0;
         }
+    }
+
+    /**
+     * Given an Abstracts object, that has been received through the ScopusApi, this method will extract the
+     * affiliation ids of all the observed authors, that were a part of the publication.
+     * It will return an assoc array, where the author ids that were found in the publication are the keys and the
+     * corresponding affiliation ids are the values, if the assoc parameter is true. It will return a plain array
+     * with all the affiliation ids if the assoc parameter is false.
+     *
+     * CHANGELOG
+     *
+     * Added 31.12.2018
+     *
+     * @param Abstracts $publication    The publication in question
+     * @param boolean assoc             Whether or not the returned array is supposed to be associative with the
+     *                                  corresponding author ids being the keys. DEFAULT is false.
+     * @return array
+     */
+    public function getAffiliationsPublication(Abstracts $publication, $assoc=FALSE) {
+
+        // The array_map attribute is an array, whose keys are the author ids and the values the corresponding
+        // AuthorPost wrappers
+        $observed_author_ids = array_keys($this->authors_map);
+
+        $author_affiliations = $this->getAuthorsAffiliationsPublication($publication, $observed_author_ids);
+        if ($assoc) {
+            return $author_affiliations;
+        } else {
+            return array_values($author_affiliations);
+        }
+
+    }
+
+    /**
+     * Given an Abstracts object, that has been received through the ScopusApi and an array of author_ids this method
+     * will extract the affiliation id from the Abstracts object for every author in the given array (if that author
+     * was actually part of the publication).
+     * It will return an assoc array whose keys are the author ids and the values the affiliations ids that have been
+     * extracted.
+     * If the affiliation ID for an author could not be found within the Abstracts object, it will not be contained in
+     * the return.
+     *
+     * CHANGELOG
+     *
+     * Added 31.12.2018
+     *
+     * @param Abstracts $publication    The publication for which to get the affiliation values
+     * @param array $author_ids         The authors for which the affiliation ids are interesting.
+     * @return array
+     */
+    public function getAuthorsAffiliationsPublication(Abstracts $publication, array $author_ids) {
+
+        // First we extract all the Author objects from the actual publication object, that was sent from the
+        // Scopus database. These author objects represent a state of the author, back when the publication was
+        // published and thus contain the affiliation id, which was valid BACK THEN.
+        $publication_authors = $publication->getAuthors();
+
+        $affiliation_ids = array();
+
+        foreach ($publication_authors as $publication_author) {
+
+            // If an author ID from within the publication matches an observed author, its affiliation id is extracted
+            // and added to the list which will be returned at the end
+            $author_id = $publication_author->getId();
+            if (in_array($author_id, $author_ids)) {
+
+                // The AbstractAuthor class does not directly provide a method to access the affiliation ID, thus
+                // we have to use the data dict (which is the exact data structure received from the JSON response of
+                // the database) to access it directly.
+                // The problem is, that the data dict is a protected attribute of the object, so we have to use the
+                // closure trick to access it.
+                $data = \Closure::bind(
+                    function (){return $this->data;},
+                    $publication_author,
+                    AbstractAuthor::class)();
+                if (array_key_exists('affiliation', $data) && array_key_exists('@id', $data['affiliation'])) {
+                    $affiliation_id = $data['affiliation']['@id'];
+                    $affiliation_ids[$author_id] = $affiliation_id;
+                }
+            }
+        }
+
+        return $affiliation_ids;
+
     }
 
     /**

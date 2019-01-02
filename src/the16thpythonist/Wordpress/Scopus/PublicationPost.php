@@ -47,22 +47,45 @@ class PublicationPost extends PostPost
 
     public $volume;
 
+    /**
+     * CHANGELOG
+     *
+     * Added 31.12.2018
+     *
+     * @var array   The array containing the author IDs of observed authors for this publication as keys and the values
+     *              being arrays with affiliation IDs for these authors.
+     */
+    public $author_affiliations;
+
+    /**
+     * CHANGELOG
+     *
+     * Added 23.10.2018
+     *
+     * Changed 29.12.2018
+     * Added the key 'author_affiliations' which is supposed to be an assoc array, whose keys are the author IDs of the
+     * observed authors, that have worked on the publication and the values are arrays of affiliations IDs that are
+     * associated with those authors and this particular publication.
+     * This field is supposed to help and identify with which institutions the publication was affiliated at the time
+     * it was written.
+     */
     const DEFAULT_INSERT = array(
-        'title'             => '',
-        'abstract'          => '',
-        'published'         => '2012-01-01',
-        'scopus_id'         => '',
-        'doi'               => '',
-        'eid'               => '',
-        'issn'              => '',
-        'journal'           => '',
-        'volume'            => '',
-        'collaboration'     => 'NONE',
-        'author_count'      => '0',
-        'status'            => 'publish',
-        'categories'        => array(),
-        'tags'              => array(),
-        'authors'           => array()
+        'title'                 => '',
+        'abstract'              => '',
+        'published'             => '2012-01-01',
+        'scopus_id'             => '',
+        'doi'                   => '',
+        'eid'                   => '',
+        'issn'                  => '',
+        'journal'               => '',
+        'volume'                => '',
+        'collaboration'         => 'NONE',
+        'author_count'          => '0',
+        'status'                => 'publish',
+        'author_affiliations'   => array(),
+        'categories'            => array(),
+        'tags'                  => array(),
+        'authors'               => array()
     );
 
     /**
@@ -71,6 +94,9 @@ class PublicationPost extends PostPost
      * CHANGELOG
      *
      * Added 23.10.2018
+     *
+     * Changed 31.12.2018
+     * The author affiliations are now also being loaded from the meta field
      *
      * @param $post_id
      */
@@ -99,6 +125,9 @@ class PublicationPost extends PostPost
         $this->scopus_id = PostUtil::loadSinglePostMeta($this->ID, 'scopus_id');
         $this->published = PostUtil::loadSinglePostMeta($this->ID, 'published');
         $this->volume = PostUtil::loadSinglePostMeta($this->ID, 'volume');
+        // 31.12.2018
+        // Loading the author affiliations as a whole array
+        $this->author_affiliations = PostUtil::loadSinglePostMeta($this->ID, 'author_affiliations');
     }
 
     /**
@@ -373,6 +402,9 @@ class PublicationPost extends PostPost
      *
      * Added 28.10.2018
      *
+     * Changed 31.12.2018
+     * The value for the key 'author_affiliations' is now also inserted as post meta.
+     *
      * @param $args
      * @return int|\WP_Error
      */
@@ -385,16 +417,21 @@ class PublicationPost extends PostPost
             'post_content'      => $args['abstract'],
             'post_status'       => $args['status'],
             'meta_input'        => array(
-                'scopus_id'         => $args['scopus_id'],
-                'published'         => $args['published'],
-                'volume'            => $args['volume'],
-                'doi'               => $args['doi'],
-                'eid'               => $args['eid'],
-                'author_count'      => $args['author_count'],
-                'issn'              => $args['issn']
+                'scopus_id'             => $args['scopus_id'],
+                'published'             => $args['published'],
+                'volume'                => $args['volume'],
+                'doi'                   => $args['doi'],
+                'eid'                   => $args['eid'],
+                'author_count'          => $args['author_count'],
+                'issn'                  => $args['issn'],
+                'author_affiliations'   => $args['author_affiliations']
             ),
         );
         $wpid = wp_insert_post($postarr);
+
+        // 31.12.2018
+        // Here we add the whole array of affiliations for the authors as a meta value
+        update_post_meta($wpid, 'author_affiliations', $args['author_affiliations']);
 
         // Here we insert the taxonomy values into the post. We need to do this with separate functions, because
         // sadly the 'tax_input' option in the postarr does not work very well.

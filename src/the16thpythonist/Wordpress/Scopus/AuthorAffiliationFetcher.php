@@ -68,7 +68,33 @@ class AuthorAffiliationFetcher
         $this->author_id = $author_id;
 
         $this->filename = $this->filename();
+        /** @var DataPost file */
         $this->file = DataPost::create($this->filename);
+    }
+
+    /**
+     * Updates the temporary file, which contains the affiliations for the author with the new blacklist and withelist
+     * which is already within the AuthorPost object.
+     *
+     * CHANGELOG
+     *
+     * Added 02.01.2019
+     *
+     * @throws \BrowscapPHP\Exception\FileNotFoundException
+     */
+    public function updateAffiliations(){
+        $author = AuthorPost::load($this->author_id);
+
+        $affiliations = $this->file->load();
+        $new_affiliations = array();
+        foreach ($affiliations as $affiliation_id => $array) {
+            $new_affiliations[$affiliation_id] = array(
+                'name'      => $array['name'],
+                'whitelist' => $author->isWhitelist($affiliation_id),
+                'blacklist' => $author->isBlacklist($affiliation_id)
+            );
+        }
+        $this->file->save($new_affiliations);
     }
 
     /**
@@ -91,6 +117,8 @@ class AuthorAffiliationFetcher
      * CHANGELOG
      *
      * Added 31.08.2018
+     *
+     * @throws
      *
      * @since 0.0.0.0
      *

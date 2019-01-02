@@ -9,6 +9,7 @@
 namespace the16thpythonist\Wordpress\Scopus;
 
 use Exception;
+use the16thpythonist\KITOpen\Author;
 use the16thpythonist\Wordpress\Base\PostRegistration;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
@@ -87,6 +88,10 @@ class AuthorPostRegistration implements PostRegistration
      *
      * Added 29.08.2018
      *
+     * Changed 02.01.2019
+     * Added an additional AJAX function, which saves the current setting of whitelist and blacklist in the edit page
+     * of the AuthorPost.
+     *
      * @since 0.0.0.0
      */
     public function register() {
@@ -96,11 +101,14 @@ class AuthorPostRegistration implements PostRegistration
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
 
-        /*
-         * This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
-         * fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
-         */
+
+        // This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
+        // fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
         add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
+
+        // 02.01.2019
+        // This AJAX method will save the blacklist/whitelist configuration to the Post meta
+        add_action('wp_ajax_scopus_author_store_affiliations', array($this, 'ajaxSaveAffiliations'));
 
     }
 
@@ -321,7 +329,7 @@ class AuthorPostRegistration implements PostRegistration
             institutes <em>have to be manually ticked</em> as whitelisted!
         </p>
 
-        <button id="update-affiliations">Update Affiliations</button>
+        <button class="material-button" id="update-affiliations">Update Affiliations</button>
 
         <div id="affiliation-fetch-log">
             <strong>Affiliation retrieval Log</strong>
@@ -341,7 +349,14 @@ class AuthorPostRegistration implements PostRegistration
             </div>
         </div>
 
+        <hr>
+        <button class="material-button" id="save-affiliations">Save Selection</button>
+
         <script>
+            // Here we need to make sure, that Javascript "knows" the post ID of the post, which we are currently
+            // in, so it can execute the save operation correctly later on.
+            var post_id = <?php global $post; echo $post->ID; ?>;
+
             // First we need to load the script, which contains all the necessary functions.
             // The actual code for the affiliation display only gets executed once the script is loaded
             jQuery.getScript("<?php echo plugin_dir_url(__FILE__); ?>scopus-author.js", function () {
@@ -388,4 +403,39 @@ class AuthorPostRegistration implements PostRegistration
         wp_die();
     }
 
+    /**
+     * The ajax method, which will save the blacklist and the whitelist (passed as URL parameters) to the AuthorPost
+     *
+     * CHANGELOG
+     *
+     * Added 02.01.2019
+     */
+    public function ajaxSaveAffiliations() {
+
+        try {
+            $whitelist = $_GET['whitelist'];
+            $blacklist = $_GET['blacklist'];
+            $post_id = $_GET['post_id'];
+
+            // Here we actually insert the date as meta values to the corresponding author post.
+            update_post_meta($post_id, 'scopus_whitelist', implode(',', $whitelist));
+            update_post_meta($post_id, 'scopus_blacklist', implode(',', $blacklist));
+
+            $author_post = new AuthorPost($post_id);
+
+            // Why this is necessary is a little bit more complicated. The front end display of the affiliations and
+            // the checkboxes is based on a temporary DataPost. With this we issue the affiliation fetcher to update
+            // the blacklist and whitelist values within this DataPost according to how they are in the actual
+            // AuthorPost. If we didnt do this, the changes would indeed be saved, but not visible in the front end.
+            $fetcher = new AuthorAffiliationFetcher();
+            foreach ($author_post->author_ids as $author_id) {
+                $fetcher->set($author_id);
+                $fetcher->updateAffiliations();
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        } finally {
+            wp_die();
+        }
+    }
 }
