@@ -87,9 +87,16 @@ class WpScopusRegistration
      * CHANGELOG
      *
      * Added 23.10.2018
+     *
+     * Changed 13.01.2019
+     * Added the registration for the shortcode, which displays a listing of the most recent publications published.
      */
     public function registerShortcodes() {
         $metrics = new AuthorMetricsShortcode('author-metrics');
         $metrics->register();
+
+        // 13.01.2019
+        $recent_publications_shortcode = new RecentPublicationsShortcode();
+        $recent_publications_shortcode->register();
     }
 }

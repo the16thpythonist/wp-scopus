@@ -202,6 +202,9 @@ of the observed authors.
 - Changed the DeletePublicationsCommand to UpdatePublicationsCommand, which now updates all the publications based on 
 the new affiliation white/blacklist values and a given Time period. (the delete was not necessary anyways)
 
+### 0.0.0.6 - 13.01.2019
 
+- Added a shortcode class for a shortcode "display-recent-commands", which will display a listing with the most 
+recent publications posted to the wordpress system with customizable format (long/short) container html class
 
 
