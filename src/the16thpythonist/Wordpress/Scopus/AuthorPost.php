@@ -12,7 +12,9 @@ use BrowscapPHP\Exception\FileNotFoundException;
 use Scopus\ScopusApi;
 use Scopus\Response\Abstracts;
 use Scopus\Response\AbstractAuthor;
+use the16thpythonist\KITOpen\Author;
 use the16thpythonist\Wordpress\Base\PostPost;
+use the16thpythonist\Wordpress\Functions\PostUtil;
 
 
 /**
@@ -90,10 +92,10 @@ class AuthorPost extends PostPost
     const DEFAULT_INSERT = array(
         'first_name'        => '',
         'last_name'         => '',
-        'ids'               => array(),
+        'scopus_ids'        => array(),
         'categories'        => array(),
-        'blacklist'         => array(),
-        'whitelist'         => array()
+        'scopus_blacklist'  => array(),
+        'scopus_whitelist'  => array()
     );
 
     /**
@@ -107,6 +109,10 @@ class AuthorPost extends PostPost
      * Added the field ID and assigned it the wordpress post id in the constructor. This is to keep all the wrapper
      * objects sort the same
      *
+     * Changed 24.02.2019
+     * Using the PostUtil to load all the meta values into the object attributes now. Also changed the meta fields, so
+     * that all of them now store arrays, instead of CSV strings
+     *
      * @since 0.0.0.0
      *
      * @param $post_id
@@ -117,16 +123,23 @@ class AuthorPost extends PostPost
         $this->ID = $post_id;
         $this->post = get_post($post_id);
 
-        /*
-         *
-         */
-        $this->first_name = $this->loadMeta('first_name', true);
-        $this->last_name = $this->loadMeta('last_name', true);
-        $this->author_ids = $this->loadMeta('scopus_author_id', false);
-        $this->categories = $this->loadMeta('categories', false);
-        $this->scopus_blacklist = $this->loadMeta('scopus_blacklist', false);
-        $this->scopus_whitelist = $this->loadMeta('scopus_whitelist', false);
+
+        $this->first_name = PostUtil::loadSinglePostMeta($this->post_id, 'first_name', '');
+        $this->last_name = PostUtil::loadSinglePostMeta($this->post_id, 'last_name', '');
+        $this->author_ids = PostUtil::loadSinglePostMeta($this->post_id, 'scopus_author_id', array());
+        $this->categories = PostUtil::loadSinglePostMeta($this->post_id, 'categories', array());
+        $this->scopus_blacklist = PostUtil::loadSinglePostMeta($this->post_id, 'scopus_blacklist', array());
+        $this->scopus_whitelist = PostUtil::loadSinglePostMeta($this->post_id, 'scopus_whitelist', array());
     }
+
+    // **************
+    // GETTER METHODS
+    // **************
+
+
+    // *****************************************
+    // METHODS FOR INTERACTING WITH PUBLICATIONS
+    // *****************************************
 
     /**
      * For a given publication Abstract this method will return if that pub is black/whitelisted
@@ -362,6 +375,36 @@ class AuthorPost extends PostPost
         return get_post_meta($this->post_id, $key, true);
     }
 
+    // *******************
+    // COMPUTED PROPERTIES
+    // *******************
+
+    /**
+     * Returns an array, that contains exactly the format needed to pass it to the 'insert' function to create an
+     * Identical post.
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     *
+     * @return array
+     */
+    public function toInsertArgs() {
+        $args = array(
+            'first_name'            => $this->first_name,
+            'last_name'             => $this->last_name,
+            'categories'            => $this->categories,
+            'scopus_whitelist'      => $this->scopus_whitelist,
+            'scopus_blacklist'      => $this->scopus_blacklist,
+            'scopus_ids'            => $this->author_ids
+        );
+        return $args;
+    }
+
+    // **************
+    // STATIC METHODS
+    // **************
+
     /**
      * Registers the post type with wordpress
      *
@@ -388,11 +431,33 @@ class AuthorPost extends PostPost
     }
 
     /**
+     * Returns whether the "author" post type has been registered in wordpress already
+     *
+     * CHANGELOG
+     *
+     * Added 28.10.2018
+     *
+     * @since 0.0.0.2
+     *
+     * @return bool
+     */
+    public static function isRegistered() {
+        return post_type_exists(self::$POST_TYPE);
+    }
+
+    // ***************************
+    // STATIC POST TYPE OPERATIONS
+    // ***************************
+
+    /**
      * Returns an array with AuthorPost wrapper objects for every author post currently on the website
      *
      * CHANGELOG
      *
      * Added 23.10.2018
+     *
+     * Changed 24.02.2019
+     *
      *
      * @since 0.0.0.2
      *
@@ -400,6 +465,28 @@ class AuthorPost extends PostPost
      */
     public static function getAll() {
 
+        // 24.02.2019
+        // First we need all the posts and then we can simply put the wrapper around each one of them
+        // This method will create a query, that returns an array with all the WP_Post objects for the author posts.
+        $posts = self::getAllPosts();
+
+        // We will create a function, which takes a post and generates a new AuthorPost wrapper from it and then
+        // map this function onto the whole list of posts just loaded by the query
+        $cb = function($post) { return new AuthorPost($post->ID); };
+        $author_posts = array_map($cb, $posts);
+        return $author_posts;
+    }
+
+    /**
+     * Returns an array with WP_Post objects for each author post in the system
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     *
+     * @return array
+     */
+    public static function getAllPosts() {
         // The query will get all the author posts
         $args = array(
             'post_type'         => self::$POST_TYPE,
@@ -409,11 +496,7 @@ class AuthorPost extends PostPost
         $query = new \WP_Query($args);
         $posts = $query->get_posts();
 
-        // We will create a function, which takes a post and generates a new AuthorPost wrapper from it and then
-        // map this function onto the whole list of posts just loaded by the query
-        $cb = function($post) { return new AuthorPost($post->ID); };
-
-        return array_map($cb, $posts);
+        return $posts;
     }
 
     /**
@@ -487,26 +570,68 @@ class AuthorPost extends PostPost
     }
 
     /**
-     * Returns whether the "author" post type has been registered in wordpress already
+     * Updates the post with the given post_id with the new values specified in args array
+     * The following arguments can be passed via the args array:
+     * - first_name:        The string first name of the author to be described by this post
+     * - last_name:         The string last name
+     * - categories:        An array of strings, each string being the name of a category which is to be assigned to
+     *                      each publication, this author has helped to publish
+     * - scopus_ids:        An array of string scopus IDs, that are associated with this author in the scopus database
+     * - scopus_whitelist:  An array of scopus affiliations IDs, for institutions whose publications are supposed to
+     *                      appear on the website for this author.
+     * - scopus_blacklist:  An array of scopus affiliation IDs, for institutions when associated with this authors
+     *                      publications. Those pubs should not appear on the website.
      *
      * CHANGELOG
      *
-     * Added 28.10.2018
+     * Added 24.02.2019
      *
-     * @since 0.0.0.2
-     *
-     * @return bool
+     * @param $post_id
+     * @param array $args
+     * @return int|\WP_Error
      */
-    public static function isRegistered() {
-        return post_type_exists(self::$POST_TYPE);
+    public static function update($post_id, array $args) {
+
+        // Here we load the currently existing AuthorPost to the given post id. From this author post we compute an
+        // arguments array, that contains all the values of the current post in insert argument array format, then we
+        // only replace the values, that are actually passed as the arguments to be updated.
+        // Like this we ensure, that during the computation of additional arguments by extendPostArgs there is no
+        // KeyError due to a relevant one just not being updated.
+        $author_post = new AuthorPost($post_id);
+        $current_args = $author_post->toInsertArgs();
+        $args = array_replace($current_args, $args);
+
+        $args = self::extendPostArgs($args);
+        // This method creates an array, that has the exact right formatting to be passed to the wp_insert_post function
+        // from the much more readable args array. But we need to add the info about the post ID, so wordpress knows
+        // which post to modify
+        $postarr = self::createPostarr($args);
+        $postarr['ID'] = $post_id;
+
+        return wp_update_post($postarr);
     }
 
     /**
-     * Inserts a new author post into wordpress
+     * Inserts a new author post into wordpress.
+     * The following arguments can be passed via the args array:
+     * - first_name:        The string first name of the author to be described by this post
+     * - last_name:         The string last name
+     * - categories:        An array of strings, each string being the name of a category which is to be assigned to
+     *                      each publication, this author has helped to publish
+     * - scopus_ids:        An array of string scopus IDs, that are associated with this author in the scopus database
+     * - scopus_whitelist:  An array of scopus affiliations IDs, for institutions whose publications are supposed to
+     *                      appear on the website for this author.
+     * - scopus_blacklist:  An array of scopus affiliation IDs, for institutions when associated with this authors
+     *                      publications. Those pubs should not appear on the website.
      *
      * CHANGELOG
      *
      * Added 28.10.2018
+     *
+     * Changed 24.02.2019
+     * Previously this method was huge and handled the computation of additional arguments from the existing ones and
+     * the creation of the postarr array from the given arguments array, these are now being handled in separate
+     * methods.
      *
      * @since 0.0.0.2
      *
@@ -519,28 +644,74 @@ class AuthorPost extends PostPost
         // specified by the given arguments, with the "real" values.
         $args = array_replace(self::DEFAULT_INSERT, $args);
 
-        // The full name in the format "{last name}, {first name}" will be used as the title of the author post
-        $full_name = sprintf('%s, %s', $args['last_name'], $args['first_name']);
+        // 24.02.2019
+        // Instead of computing the additional parameters for the insert and creating the postarr actually needed for
+        // the wp_insert_post function here, this is being done in separate functions. extendPostArgs takes the
+        // arguments from the given array and computes new parameters from them, in this case the indexed name and the
+        // full name from the given first and last name strings.
+        // createPostArr creates the wordpress postarr array (the kind of array formatting wordpress expects) from
+        // the arguments.
+        $args = self::extendPostArgs($args);
+        $postarr = self::createPostarr($args);
 
-        // Here the arguments array for the post insertion gets prepared. The multiple meta values are being inserted
-        // as comma separated values due to a bad design choice, where they are saved as csv string within the meta
-        // field and when loading it is expected they have that format.
-        $postarr = array(
-            'post_type'         => self::$POST_TYPE,
-            'post_status'       => 'publish',
-            'post_title'        => $full_name,
-            'post_content'      => '',
-            'meta_input'        => array(
-                'first_name'        => $args['first_name'],
-                'last_name'         => $args['last_name'],
-                'scopus_author_id'  => implode(',', $args['ids']),
-                'categories'        => implode(',', $args['categories']),
-                'scopus_whitelist'  => implode(',', $args['whitelist']),
-                'scopus_blacklist'  => implode(',', $args['blacklist'])
-            )
-        );
         $wp_id = wp_insert_post($postarr);
         return $wp_id;
+    }
+
+    /**
+     * Given the argument array for a insert/update method, this function will compute the additionally needed
+     * arguments from the already existing ones.
+     * The indexed_name and full_name strings from the first and last name of the author
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     *
+     * @param array $args
+     * @return array
+     */
+    public static function extendPostArgs(array $args) {
+        // Here the full name and the indexed name of the author are being computed from the first and last name
+        // which are already part of the arguments array
+        $full_name = sprintf('%s %s', $args['first_name'], $args['last_name']);
+        $indexed_name = sprintf('%s, %s', $args['last_name'], $args['first_name']);
+
+        $args['full_name'] = $full_name;
+        $args['indexed_name'] = $indexed_name;
+
+        return $args;
+    }
+
+    /**
+     * Given the arguments array to a insert/update method call, this will create the postarr array from it. This is
+     * the special kind of array format needed to be directly passed to the wp_insert_post function to create
+     * the corresponding post
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     *
+     * @param array $args
+     * @return array
+     */
+    public static function createPostarr(array $args) {
+        $mapping = array(
+            'indexed_name'          => 'post_title',
+            'first_name'            => 'meta_input/first_name',
+            'last_name'             => 'meta_input/last_name',
+            'full name'             => 'meta_input/full_name',
+            'categories'            => 'meta_input/categories',
+            'scopus_ids'            => 'meta_input/scopus_author_id',
+            'scopus_whitelist'      => 'meta_input/scopus_whitelist',
+            'scopus_blacklist'      => 'meta_input/scopus_blacklist'
+        );
+        // With a valid mapping this value creates an array with a new key (possibly even nested) structure from
+        // another array.
+        $postarr = PostUtil::subArrayMapping($mapping, $args);
+        $postarr['post_status'] = 'publish';
+        $postarr['post_type'] = self::$POST_TYPE;
+
+        return $postarr;
     }
 
     /**

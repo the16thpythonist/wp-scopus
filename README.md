@@ -208,3 +208,14 @@ the new affiliation white/blacklist values and a given Time period. (the delete 
 recent publications posted to the wordpress system with customizable format (long/short) container html class
 
 
+### 0.0.0.7 - 26.02.2019
+
+- Added an options page for the scopus plugin: To be input there is the user which should act as the wordpress author 
+of all the scopus publication posts. Also a list input of all the category names with which an author can ve associated 
+with.
+- Changed the way author posts are created and edited. The scopus Ids can now be input as a array text input. The 
+categories can be added by a dynamic list of select inputs, where the options are defined in the options page of the 
+scopus plugins, to prevent wrong names/duplicates/spelling mistakes
+ls
+- Added some tests (which can only be run on a specific machine and setup, but better than nothing)
+- Using VueJS now for the frontend application code

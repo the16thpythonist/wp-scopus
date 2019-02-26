@@ -11,7 +11,15 @@ namespace the16thpythonist\Wordpress\Scopus;
 use the16thpythonist\Wordpress\Base\PostRegistration;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
-
+/**
+ * Class PublicationPostModification
+ *
+ * CHANGELOG
+ *
+ * Added 20.10.2018
+ *
+ * @package the16thpythonist\Wordpress\Scopus
+ */
 class PublicationPostModification implements PostRegistration
 {
     /**
@@ -60,12 +68,19 @@ class PublicationPostModification implements PostRegistration
         return $this->post_type;
     }
 
+    // *************************
+    // REGISTERING THE POST TYPE
+    // *************************
+
     /**
      * Hooking in all the methods needed to modify the "post" type to represent publication type posts
      *
      * CHANGELOG
      *
      * Added 20.10.2018
+     *
+     * Changed 12.02.2019
+     * Added the method, that registers the comments to be disabled for the post type.
      *
      * @since 0.0.0.2
      *
@@ -82,6 +97,33 @@ class PublicationPostModification implements PostRegistration
 
         add_filter('save_post', array($this, 'savePost'), 20, 2);
         //add_filter('wp_insert_post_data', array($this, 'insertPostData'), 20, 2);
+
+        // 12.02.2019
+        // Disabling the comments under a scopus publication
+        $this->registerDisabledComments();
+    }
+
+    /**
+     * Hooks in the method, that actuall disables the comments into wordpress "init"
+     *
+     * CHANGELOG
+     *
+     * Added 12.02.2019
+     */
+    public function registerDisabledComments() {
+        add_action('init', array($this, 'disableComments'));
+    }
+
+    /**
+     * Disables the comments for this post type.
+     * Has to be called in wordpress "init"
+     *
+     * CHANGELOG
+     *
+     * Added 12.02.2019
+     */
+    public function disableComments() {
+        remove_post_type_support($this->post_type, 'comments');
     }
 
     public function remove() {

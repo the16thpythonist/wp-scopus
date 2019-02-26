@@ -92,6 +92,9 @@ class AuthorPostRegistration implements PostRegistration
      * Added an additional AJAX function, which saves the current setting of whitelist and blacklist in the edit page
      * of the AuthorPost.
      *
+     * Changed 24.02.2019
+     * Moved the ajax registrations into an own method and calling it here.
+     *
      * @since 0.0.0.0
      */
     public function register() {
@@ -101,15 +104,9 @@ class AuthorPostRegistration implements PostRegistration
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
 
-
-        // This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
-        // fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
-        add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
-
-        // 02.01.2019
-        // This AJAX method will save the blacklist/whitelist configuration to the Post meta
-        add_action('wp_ajax_scopus_author_store_affiliations', array($this, 'ajaxSaveAffiliations'));
-
+        // 24.02.2019
+        // Moved the actual ajax registration into its own method
+        $this->registerAJAX();
     }
 
     /**
@@ -132,6 +129,28 @@ class AuthorPostRegistration implements PostRegistration
             'menu_icon'             => 'dashicons-businessman'
         );
         register_post_type($this->post_type, $args);
+    }
+
+    /**
+     * Registers all the methods of this instance, which are ajax callbacks with wordpress
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     */
+    function registerAJAX() {
+        // This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
+        // fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
+        add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
+
+        // 02.01.2019
+        // This AJAX method will save the blacklist/whitelist configuration to the Post meta
+        add_action('wp_ajax_scopus_author_store_affiliations', array($this, 'ajaxSaveAffiliations'));
+
+        // 24.02.2019
+        // THis ajax method is for saving the other information about the author, such as the first name etc.
+        add_action('wp_ajax_update_author_post', array($this, 'ajaxUpdateAuthorPost'));
+        add_action('wp_ajax_insert_author_post', array($this, 'ajaxInsertAuthorPost'));
     }
 
     /**
@@ -295,29 +314,25 @@ class AuthorPostRegistration implements PostRegistration
             );
         }
         $post = new AuthorPost($post_id);
+
+        // Here we are getting the list of all the scopus ids for the author post
+        $parameters = array(
+            'POST_ID'           => $post->ID,
+            'FIRST_NAME'        => $post->first_name,
+            'LAST_NAME'         => $post->last_name,
+            'AUTHOR_IDS'        => $post->author_ids,
+            'CATEGORY_OPTIONS'  => ScopusOptions::getAuthorCategories(),
+            'CATEGORIES'        => $post->categories,
+            'ADMIN_URL'         => admin_url()
+        );
+        $parameters_code = PostUtil::javascriptExposeObject('PARAMETERS', $parameters);
         ?>
-        <p>
-            Use these following input fields to enter the necessary information about the author.<br>
-            The first and last name will be used as the posts title (which means any custom title entered will be
-            deleted). The scopus author id is used to fetch all the associated publications from the scopus database.
-            The categories will define to which category any given post of that author will be added.
-        </p>
-        <div class="scopus-meta-box-wrapper">
-            <?php foreach ($meta as $key => $data): ?>
-                <div class="scopus-input-wrapper" style="display: flex; flex-direction: row; margin-bottom: 5px;">
-                    <?php if($data['type'] === 'text'): ?>
-                        <p style="width: 10%; height: 15px;">
-                            <?php echo $data['label'] . ': '; ?>
-                        </p>
-                        <input type="<?php echo $data['type'];?>" id="<?php echo $key; ?>" name="<?php echo $key; ?>" value="<?php echo $data['value']; ?>" style="flex-grow: 2;">
-                    <?php elseif ($data['type'] === 'textarea'): ?>
-                        <p style="width: 10%; align-self: flex-start;">
-                            <?php echo $data['label'] . ': '; ?>
-                        </p>
-                        <textarea id="<?php echo $key; ?>" name="<?php echo $key; ?>" rows="3" style="flex-grow: 2;"><?php echo str_replace(',', self::HTML_NEWLINE, $data['value'])?></textarea>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
+        <!-- 24.02.2019 Replaced the php template version with the new vue component for the input of author info -->
+        <script>
+            <?php echo $parameters_code; ?>
+        </script>
+        <div id="scopus-author-input">
+            <author-input></author-input>
         </div>
 
         <h3>Author affiliations</h3>
@@ -379,6 +394,10 @@ class AuthorPostRegistration implements PostRegistration
         <?php
     }
 
+    // *********************************
+    // AJAX OPERATIONS FOR THE POST TYPE
+    // *********************************
+
     /**
      * The ajax method, which is called to start the process of fetching the author affiliations.
      *
@@ -437,5 +456,56 @@ class AuthorPostRegistration implements PostRegistration
         } finally {
             wp_die();
         }
+    }
+
+    /**
+     * Ajax callback, which will update the AuthorPost object for which the ID was passed.
+     *
+     * CHANGELOG
+     *
+     * Added 26.02.2019
+     */
+    public function ajaxUpdateAuthorPost() {
+        $expected_args = array('ID', 'first_name', 'last_name', 'categories', 'scopus_ids');
+        if (PostUtil::containsGETParameters($expected_args)) {
+            $post_id = $_GET['ID'];
+            $args = self::insertArgs();
+            AuthorPost::update($post_id, $args);
+        }
+        wp_die();
+    }
+
+    public function ajaxInsertAuthorPost () {
+        $expected_args = array('first_name', 'last_name', 'categories', 'scopus_ids');
+        if (PostUtil::containsGETParameters($expected_args)) {
+            $args = self::insertArgs();
+            AuthorPost::insert($args);
+        }
+    }
+
+
+    // **************
+    // STATIC METHODS
+    // **************
+
+    /**
+     * This method computes an array with the format needed to call the AuthorPost::insert method from the values in
+     * the _GET array. This method should only be called in the corresponding ajax callbacks and after validating that
+     * the response contains all these values.
+     *
+     * CHANGELOG
+     *
+     * Added 24.02.2019
+     *
+     * @return array
+     */
+    public static function insertArgs() {
+        $args = array(
+            'first_name'        => $_GET['first_name'],
+            'last_name'         => $_GET['last_name'],
+            'scopus_ids'        => str_getcsv($_GET['scopus_ids']),
+            'categories'        => str_getcsv($_GET['categories'])
+        );
+        return $args;
     }
 }

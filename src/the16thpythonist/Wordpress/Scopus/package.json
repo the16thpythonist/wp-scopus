@@ -1,0 +1,19 @@
+{
+  "name": "scopus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "testjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "bootstrap-vue": "^2.0.0-rc.11",
+    "vue": "^2.6.5",
+    "vueify": "^9.4.1"
+  },
+  "dependencies": {
+    "jquery": "^3.3.1"
+  }
+}

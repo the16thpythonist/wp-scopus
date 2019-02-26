@@ -130,6 +130,10 @@ class PublicationPost extends PostPost
         $this->author_affiliations = PostUtil::loadSinglePostMeta($this->ID, 'author_affiliations');
     }
 
+    # ################################
+    # GETTER METHODS FOR ALL TAX TERMS
+    # ################################
+
     /**
      * Returns an array, that contains the (indexed) names of SOME of the authors involved in the paper
      *
@@ -242,6 +246,10 @@ class PublicationPost extends PostPost
         self::addAuthorToPublication($this->ID, $author_name, $author_id);
     }
 
+    # ###################
+    # COMPUTED PROPERTIES
+    # ###################
+
     /**
      * Returns whether or not a KITOpen (journal) entry exists for this publication
      *
@@ -303,6 +311,10 @@ class PublicationPost extends PostPost
     public function getURL() {
         return 'http://dx.doi.org/' . $this->doi;
     }
+
+    # ##############
+    # STATIC METHODS
+    # ##############
 
     /**
      * Registers the publication post type in wordpress
@@ -395,6 +407,10 @@ class PublicationPost extends PostPost
         return post_type_exists(self::$POST_TYPE);
     }
 
+    // ***************************************
+    // STATIC METHODS FOR POST TYPE OPERATIONS
+    // ***************************************
+
     /**
      * Inserts a new publication post into the database with the given arguments.
      *
@@ -405,48 +421,93 @@ class PublicationPost extends PostPost
      * Changed 31.12.2018
      * The value for the key 'author_affiliations' is now also inserted as post meta.
      *
+     * Changed 12.02.2019
+     * Moved the creation of the postarr array from the given arguments array into a separate method and calling it.
+     * Moved the adding of the taxonomy terms into a separate method and calling it here
+     *
      * @param $args
      * @return int|\WP_Error
      */
     public static function insert($args) {
         $args = array_replace(self::DEFAULT_INSERT, $args);
 
-        $postarr = array(
-            'post_type'         => self::$POST_TYPE,
-            'post_title'        => $args['title'],
-            'post_content'      => $args['abstract'],
-            'post_status'       => $args['status'],
-            'meta_input'        => array(
-                'scopus_id'             => $args['scopus_id'],
-                'published'             => $args['published'],
-                'volume'                => $args['volume'],
-                'doi'                   => $args['doi'],
-                'eid'                   => $args['eid'],
-                'author_count'          => $args['author_count'],
-                'issn'                  => $args['issn'],
-                'author_affiliations'   => $args['author_affiliations']
-            ),
-        );
-        $wpid = wp_insert_post($postarr);
+        // 12.02.2019
+        // The post array is being created by using a simple nested array name mapping from the far more
+        // understandable arguments array
+        $postarr = self::createPostarr($args);
+        $post_id = wp_insert_post($postarr);
 
         // 31.12.2018
         // Here we add the whole array of affiliations for the authors as a meta value
-        update_post_meta($wpid, 'author_affiliations', $args['author_affiliations']);
+        update_post_meta($post_id, 'author_affiliations', $args['author_affiliations']);
 
-        // Here we insert the taxonomy values into the post. We need to do this with separate functions, because
-        // sadly the 'tax_input' option in the postarr does not work very well.
-        wp_set_object_terms($wpid, $args['journal'], 'journal', true);
-        wp_set_object_terms($wpid, $args['collaboration'], 'collaboration', true);
-        wp_set_object_terms($wpid, $args['tags'], 'post_tag', true);
-        wp_set_object_terms($wpid, $args['categories'], 'category', true);
+        // 12.02.2019
+        // We simply call the function, which adds all the taxonomy terms from the given arguments for us
+        self::setPublicationTerms($post_id, $args);
 
         // We need to insert the author taxonomy like this, because the author terms need to have a custom slug.
         // The slug of an author term is supposed to be the scopus author id associated with that author
         foreach ($args['authors'] as $author_name => $author_id) {
-            self::addAuthorToPublication($wpid, $author_name, $author_id);
+            self::addAuthorToPublication($post_id, $author_name, $author_id);
         }
 
-        return $wpid;
+        return $post_id;
+    }
+
+    /**
+     * Given the "post_id" of the post to change and a publication insert arguments array, this method will insert all
+     * values of the publication to be mapped as taxonomy terms for the post, that represents the publication
+     *
+     * CHANGELOG
+     *
+     * Added 12.02.2019
+     *
+     * @param $post_id
+     * @param array $args
+     */
+    public static function setPublicationTerms($post_id, array $args) {
+        // Here we insert the taxonomy values into the post. We need to do this with separate functions, because
+        // sadly the 'tax_input' option in the postarr does not work very well.
+        wp_set_object_terms($post_id, $args['journal'], 'journal', true);
+        wp_set_object_terms($post_id, $args['collaboration'], 'collaboration', true);
+        wp_set_object_terms($post_id, $args['tags'], 'post_tag', true);
+        wp_set_object_terms($post_id, $args['categories'], 'category', true);
+    }
+
+    /**
+     * Given an insert arguments array 'args' this method performs a mapping to derive the "postarr" array from it,
+     * which can be used to insert a new wordpress post corresponding to the specified publication, by passing ot to the
+     * "wp_insert_post" function directly.
+     *
+     * CHANGELOG
+     *
+     * Added 12.02.2019
+     *
+     * @param array $args
+     * @return array
+     */
+    public static function createPostarr(array $args) {
+        $mapping = array(
+            'title'                 => 'post_title',
+            'abstract'              => 'post_content',
+            'status'                => 'post_status',
+            'scopus_id'             => 'meta_input/scopus_id',
+            'published'             => 'meta_input/published',
+            'volume'                => 'meta_input/volume',
+            'doi'                   => 'meta_input/doi',
+            'eid'                   => 'meta_input/eid',
+            'author_count'          => 'meta_input/author_count',
+            'issn'                  => 'meta_input/issn',
+            'author_affiliations'   => 'meta_input/author_affiliations'
+        );
+        $postarr = PostUtil::subArrayMapping($mapping, $args);
+        $postarr['post_status'] = 'publish';
+        $postarr['post_type'] = self::$POST_TYPE;
+
+        // Setting the post author to be the "scopus author" specified in the settings of the package
+        $postarr['post_author'] = ScopusOptions::getScopusUserID();
+
+        return $postarr;
     }
 
     /**

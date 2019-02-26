@@ -296,7 +296,12 @@ class PublicationFetcher
                 'categories'            => array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications')),
                 'collaboration'         => $collaboration
             );
-            $this->post_id = PublicationPost::insert($args);
+            try{
+                $this->post_id = PublicationPost::insert($args);
+            } catch (\Error $e) {
+                $this->log->error($e->getMessage());
+            }
+
             $this->log->info(sprintf('<a href="%s">PUBLICATION "%s"</a>',get_the_permalink($this->post_id), $this->title));
 
             // 31.12.2018
