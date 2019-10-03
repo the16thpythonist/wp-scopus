@@ -42,7 +42,7 @@ you are a registered member and thus allowed to access the data.
 
 If you want to acquire an API key, go register a scopus account [here](https://www.scopus.com/home.uri)!
 
-### Installing independantly
+### Installing independently
 
 First, navigate to the root folder of your wordpress installation and then go to wp-content \> plugins.
 There you will have to create a new folder by the name "wpscopus" and *within that new folder* create two files: 
