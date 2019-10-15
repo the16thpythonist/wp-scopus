@@ -1,3 +1,14 @@
+/**
+ * SCRIPT
+ * This script handles the functionality of selecting the authors affiliations either as whitelist or as blacklist.
+ *
+ * CHANGELOG
+ *
+ * Added 03.11.2018
+ *
+ * Deprecated 11.10.2019
+ * The functionality of this code has been refactored into a VueJS component and is thus not needed anymore.
+ */
 
 var affiliations_already = [];
 var id_input = jQuery('#scopus_author_id');

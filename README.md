@@ -219,3 +219,9 @@ scopus plugins, to prevent wrong names/duplicates/spelling mistakes
 ls
 - Added some tests (which can only be run on a specific machine and setup, but better than nothing)
 - Using VueJS now for the frontend application code
+
+### 0.0.1 - 15.10.2019
+
+- Fixed the scopus author page
+    - Added the functionality for blacklisting/whitelisting author affiliations as a Vue component.
+    - Removed the author affiliation functionality as plain Javascript

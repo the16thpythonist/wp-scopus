@@ -283,6 +283,10 @@ class AuthorPostRegistration implements PostRegistration
      * Changed 30.08.2018
      * Added text paragraphs to the metabox, which describe, what has to be done/what happens in the specific sections
      *
+     * Changed 11.10.2019
+     * Removed the whole custom JS which has handled the affiliation config. The functionality has been refactored into
+     * a VueJS component, which is part of the 'author-input' master component.
+     *
      * @since 0.0.0.0
      *
      * @param \WP_Post $post
@@ -327,7 +331,10 @@ class AuthorPostRegistration implements PostRegistration
         );
         $parameters_code = PostUtil::javascriptExposeObject('PARAMETERS', $parameters);
         ?>
-        <!-- 24.02.2019 Replaced the php template version with the new vue component for the input of author info -->
+        <!--
+        Changed 24.02.2019
+        Replaced the php template version with the new vue component for the input of author info
+        -->
         <script>
             <?php echo $parameters_code; ?>
         </script>
@@ -335,62 +342,11 @@ class AuthorPostRegistration implements PostRegistration
             <author-input></author-input>
         </div>
 
-        <h3>Author affiliations</h3>
-        <p>
-            After entering the scopus author id, the sever performs a search about all the institutes the author has
-            been affiliated with over time, according to the scopus database. <br>
-            In some cases it might not be desired to keep getting papers from an unrelated institute loaded onto the
-            website, for such a case the corresponding affiliations can be ticked as blacklist. All the related
-            institutes <em>have to be manually ticked</em> as whitelisted!
-        </p>
-
-        <button class="material-button" id="update-affiliations">Update Affiliations</button>
-
-        <div id="affiliation-fetch-log">
-            <strong>Affiliation retrieval Log</strong>
-        </div>
-
-        <div id="affiliation-wrapper">
-            <div class="affiliation-caption-row">
-                <p class="first">
-                    <em>Affiliation Name</em>
-                </p>
-                <p>
-                    whitelisted
-                </p>
-                <p>
-                    blacklisted
-                </p>
-            </div>
-        </div>
-
-        <hr>
-        <button class="material-button" id="save-affiliations">Save Selection</button>
-
-        <script>
-            // Here we need to make sure, that Javascript "knows" the post ID of the post, which we are currently
-            // in, so it can execute the save operation correctly later on.
-            var post_id = <?php global $post; echo $post->ID; ?>;
-
-            // First we need to load the script, which contains all the necessary functions.
-            // The actual code for the affiliation display only gets executed once the script is loaded
-            jQuery.getScript("<?php echo plugin_dir_url(__FILE__); ?>scopus-author.js", function () {
-
-                // Running if the script is loaded properly
-                if (id_input.attr('value') !== '') {
-                    //deleteData();
-                    let ids = getIDs();
-                    console.log(ids);
-                    ids.forEach(function (id) {
-                        // fetchAffiliations(id);
-                    });
-
-                    // Loading all the affiliation IDs from the server
-                    updateAffiliations(true);
-                }
-            })
-
-        </script>
+        <!--
+        Changed 11.10.2019
+        Removed the whole custom JS code for the affiliation config, as all of that has been refactored into a VueJS
+        component, which is part of the 'author-input' component.
+        -->
         <?php
     }
 
@@ -428,6 +384,10 @@ class AuthorPostRegistration implements PostRegistration
      * CHANGELOG
      *
      * Added 02.01.2019
+     *
+     * Changed 11.10.2019
+     * The whitelist and blacklist meta value were previously saved as comma separated strings, but since there has
+     * been a change within the author post model, they are now saved directly as arrays.
      */
     public function ajaxSaveAffiliations() {
 
@@ -437,8 +397,10 @@ class AuthorPostRegistration implements PostRegistration
             $post_id = $_GET['post_id'];
 
             // Here we actually insert the date as meta values to the corresponding author post.
-            update_post_meta($post_id, 'scopus_whitelist', implode(',', $whitelist));
-            update_post_meta($post_id, 'scopus_blacklist', implode(',', $blacklist));
+            // 11.10.2019
+            // The lists are now being saved as arrays instead of comma separated lists.
+            update_post_meta($post_id, 'scopus_whitelist', $whitelist);
+            update_post_meta($post_id, 'scopus_blacklist', $blacklist);
 
             $author_post = new AuthorPost($post_id);
 

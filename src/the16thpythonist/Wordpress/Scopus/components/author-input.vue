@@ -4,7 +4,14 @@
         <p>
             Use these following input fields to enter the necessary information about the author. <br>
             (Note that the first and last name will be used as the title of the author post, replacing any custom title
-            entered)
+            entered), <br>
+            One author might be associated with multiple scopus author ids. This can be due to a mistake within the
+            scopus database. For such a case multiple ids can be added to the author. All of them will be considered
+            when fetching affiliation info and while requesting new publications from the scopus database. <br>
+            One author usually works in a specific scientific field or a work group. For this case a category can be
+            chosen. It is assumed, that if the author has these "specialties", every publication he has co-authored
+            will be (at least partially) connected to that topic. Thus every publication fetched, which contains this
+            author will be classified with his categories.
         </p>
         <!--
         First we have two normal text inputs for the first and last name of the author. These are bound to two
@@ -12,11 +19,11 @@
         -->
         <div class="scopus-input-container">
             <label>First name:</label>
-            <input v-model="firstName" type="type-text" size="sm"></input>
+            <input v-model="firstName" type="text" size="sm">
         </div>
         <div class="scopus-input-container">
             <label>Last name:</label>
-            <input v-model="lastName" type="type-text" size="sm"></input>
+            <input v-model="lastName" type="text" size="sm">
         </div>
         <div class="scopus-input-container">
             <label>Scopus ID:</label>
@@ -37,12 +44,22 @@
             -->
             <v-array-select-input v-on:input="onCategoryChange" :array="categories" :options="options"></v-array-select-input>
         </div>
+
+        <!--
+        This section is for the functionality to display the affiliations for an author
+        -->
+        <v-author-affiliation-listing ref="affiliations" :affiliations="affiliations" :logBus="logBus" :authors="['35313939900']"></v-author-affiliation-listing>
+        <v-activity-log :messages="[]" :logBus="logBus"></v-activity-log>
+
         <!--
         The "prevent" option on click is important, so the button doesnt reload the page!
         Pressing this button will either update the author post using ajax, if the author post exists already, if a new
         post is being created it will additionally redirect to the new page.
+
+        Changed 11.10.2019
+        Moved the button to the bottom of thee page, so it is clear, that it will also save the affiliations
         -->
-        <button @click.prevent="onSave">save</button>
+        <button @click.prevent="onSave" class="material-button">save</button>
     </div>
 </template>
 
@@ -50,6 +67,10 @@
     jquery = require('jquery');
     ArrayTextInput = require('./array-text-input.vue');
     ArraySelectInput = require('./array-select-input.vue');
+    AuthorAffiliationListing = require('./author-affiliation-listing.vue');
+    ActivityLog = require('./activity-log.vue');
+
+    let Vue = require( 'vue/dist/vue.js' );
 
     let ajax = function() {
 
@@ -74,10 +95,10 @@
                 async:      true,
                 data:       data,
                 success:    function (response) {
-                    //console.log(response);
+                    console.log(response);
                 },
                 error:      function (response) {
-                    //console.log(response);
+                    console.log(response);
                 }
             });
         };
@@ -97,7 +118,10 @@
             doAction('update_author_post', data)
         };
 
+        // Changed 10.10.2019
+        // Also exposing the "doAction" directly, becuase it is needed for the saving process of the affiliations.
         return {
+            doAction: doAction,
             update: update
         }
     }();
@@ -112,7 +136,19 @@
                 categories: Object.values(PARAMETERS['CATEGORIES']),
                 scopusIDs: Object.values(PARAMETERS['AUTHOR_IDS']),
                 firstName: PARAMETERS['FIRST_NAME'],
-                lastName: PARAMETERS['LAST_NAME']
+                lastName: PARAMETERS['LAST_NAME'],
+                // Added 11.10.2019
+                // We are also saving the wordpress post id as a property now, because it is needed in several places
+                // and it is cleaner to have it as a property instead of having the methods directly access the
+                // PARAMETERS object...
+                postID: PARAMETERS['POST_ID'],
+                // Added 10.10.2019
+                logBus: new Vue(),
+                // Added 10.10.2019
+                // This object will be bound to the author-affiliation-listing component. This component will populate
+                // the object with all the information about the affiliations of the author and also whether or  not
+                // the user has whitelisted or blacklisted them.
+                affiliations: {}
             }
         },
         props: {
@@ -155,6 +191,10 @@
              * CHANGELOG
              *
              * Added 26.02.2019
+             *
+             * Changed 11.10.2019
+             * Added a call to the 'saveAffiliations' method, so that after pressing the save button, the affiliation
+             * config is also saved to the server
              */
             onSave: function () {
                 let data = {
@@ -168,6 +208,12 @@
                 console.log(this.scopusIDs);
 
                 ajax.update(data);
+
+                // 11.10.2019
+                // This method will save the affiliation config, which the user has put in via the whitelist(blacklist
+                // radio selects, to the server.
+                this.saveAffiliations();
+
                 // 26.02.2019
                 // If we are currently on the new post page, than on save we need to redirect to the actual edit page
                 // of the post that was just created
@@ -175,6 +221,33 @@
                     this.redirectEdit();
                 }
 
+            },
+            /**
+             * Saves the affiliation whitelist/blacklist config from the author-affiliation-listing to the server
+             *
+             * The whitelist and blacklist are generated by functions of the affiliations component. The saving process
+             * Is initiated by sending the lists with the affiliation ids as the parameters to an AJAX call.
+             *
+             * CHANGELOG
+             *
+             * Added 11.10.2019
+             */
+            saveAffiliations: function () {
+                // The "$refs.affiliations" is a reference to the author affiliation listing component object, which is
+                // used as part of the author input.
+                // This component manages the author affiliations and exposes methods to get the whitelist and
+                // blacklist from it.
+                let whitelist = this.$refs.affiliations.getWhitelist();
+                let blacklist = this.$refs.affiliations.getBlacklist();
+
+                // This will save the blacklist/whitelist config into the persistent DataPost file for that author.
+                let action = 'scopus_author_store_affiliations';
+                let parameters = {
+                    'post_id':      this.postID,
+                    'whitelist':    whitelist,
+                    'blacklist':    blacklist
+                };
+                ajax.doAction(action, parameters);
             },
             /**
              * Redirects the current page to the edit page of the post, whose POST_ID was passed in the
@@ -191,7 +264,9 @@
         name: "author-input",
         components: {
             'v-array-text-input': ArrayTextInput,
-            'v-array-select-input': ArraySelectInput
+            'v-array-select-input': ArraySelectInput,
+            'v-author-affiliation-listing': AuthorAffiliationListing,
+            'v-activity-log': ActivityLog,
         }
     }
 </script>

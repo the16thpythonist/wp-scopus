@@ -1,12 +1,17 @@
 <template>
     <div class="array-input">
+        <!--
+        Changed 11.10.2019
+        Added the class "array-input-button" to both the remove and add button, so it easier to style both of
+        them in the same way.
+        -->
         <template v-for="index in Object.keys(associatedData)">
             <div class="array-text-input-element">
                 <input v-on:input="onInput" class="array-text-input" type="text" :placeholder="associatedData[index]" v-model="associatedData[index]">
-                <button v-on:click.prevent="onRemove(index)" class="array-input-remove-button">-</button>
+                <button v-on:click.prevent="onRemove(index)" class="array-input-button array-input-remove-button">-</button>
             </div>
         </template>
-        <button v-on:click.prevent="onAdd" class="array-input-add-button">add element</button>
+        <button v-on:click.prevent="onAdd" class="array-input-button array-input-add-button">+</button>
     </div>
 </template>
 
@@ -96,5 +101,9 @@
 
     div.array-text-input-element {
         margin-bottom: 10px;
+    }
+
+    button.array-input-add-button {
+        width: 20px;
     }
 </style>

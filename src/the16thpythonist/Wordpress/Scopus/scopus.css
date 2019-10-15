@@ -97,3 +97,96 @@ div#affiliation-fetch-log {
     margin-top: 10px;
     margin-bottom: 5px;
 }
+
+/*
+*****************************************************************************************
+COMPONENT: author-input
+
+This component manages the input of all the author specific meta data.
+ */
+#scopus-author-input h2 {
+    font-size: 2em;
+    padding-left: 0;
+    margin-top: 10px;
+}
+
+
+/*
+*****************************************************************************************
+COMPONENT: array-select-input
+ */
+
+#scopus-author-input div.array-input {
+    padding: 10px;
+    background-color: #f7f7f7;
+}
+
+#scopus-author-input button.array-input-button {
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+
+    color: white;
+    background-color: #3ECF8E;
+
+    border-style: solid;
+    border-width: 0px;
+}
+
+#scopus-author-input button.array-input-button:active {
+    background-color: #28A46C;
+}
+
+#scopus-author-input button.array-input-add-button {
+    border-radius: 0px;
+}
+
+#scopus-author-input button.array-input-remove-button {
+    font-size: 15px;
+    width: 26px;
+    height: 26px;
+    margin-left: 0px;
+}
+
+/*
+*****************************************************************************************
+COMPONENT: author-affiliation-listing
+ */
+
+#scopus-author-input div.scopus-author-affiliation-list {
+    padding: 10px;
+
+    background-color: #f7f7f7;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#scopus-author-input div.scopus-author-affiliation-header strong {
+    margin-right: auto;
+}
+
+#scopus-author-input div.scopus-author-affiliation .first {
+    flex-grow: 5;
+}
+
+#scopus-author-input div.scopus-author-affiliation .other {
+    width: 100px;
+}
+
+div.scopus-author-affiliation {
+    display: flex;
+    flex-direction: row;
+}
+
+/*
+*****************************************************************************************
+COMPONENT: activity-log
+ */
+
+#scopus-author-input .activity-log-container {
+    background-color: #f7f7f7;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding: 10px;
+}

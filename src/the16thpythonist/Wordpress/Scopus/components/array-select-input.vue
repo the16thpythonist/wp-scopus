@@ -8,10 +8,10 @@
                         <option v-else>{{ option }}</option>
                     </template>
                 </select>
-                <button v-on:click.prevent="onRemove(index)">-</button>
+                <button v-on:click.prevent="onRemove(index)" class="array-input-button array-input-remove-button">-</button>
             </div>
         </template>
-        <button v-on:click.prevent="onAdd">add element</button>
+        <button v-on:click.prevent="onAdd" class="array-input-button array-input-add-button">+</button>
     </div>
 </template>
 
