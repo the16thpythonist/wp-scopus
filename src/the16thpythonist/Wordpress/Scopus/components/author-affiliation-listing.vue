@@ -328,11 +328,17 @@
              * now being used. Because when working with an object the automatic change detection does not work!
              * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
              * display can be updated easily.
+             * Also added log messages.
              */
             updateAffiliations: function () {
                 let affiliations = this.affiliation_manager.getAffiliations(this.authors);
                 for (let id in affiliations) {
                     if (affiliations.hasOwnProperty(id)) {
+
+                        // Logging, that this affiliation has been changed.
+                        if (!this.affiliations.hasOwnProperty(id)) {
+                            this.log(`affiliation with ID '${id}' has been updated`);
+                        }
 
                         // Changed 17.10.2019
                         // using the Vue.set() method now to add a new value to the affiliations object, because that
@@ -347,15 +353,38 @@
                 }
             },
             /**
+             * Clears the assoc. array, which contains the affiliations as well as the array, which contains, whether
+             * they have been white or blacklisted
+             *
+             * CHANGELOG
+             *
+             * Added 17.10.2019
+             */
+            clearAffiliations: function() {
+                this.affiliations = {};
+                this.listing = {};
+            },
+            /**
              * Triggers the server to fetch new affil. info from scopus and updates the display on site.
              *
              * CHANGELOG
              *
              * Added 11.10.2019
+             *
+             * Changed 17.10.2019
+             * Added a call to "clearAffiliations" before actually updating the affiliations.
+             * Also added log messages
              */
             fetchAffiliations: function () {
+                // Changed 17.10.2019
+                // The fetch process is intended to get a fresh set of affiliations, which means that the old ones
+                // have to be cleared first
+                this.clearAffiliations();
+                this.log('Current affiliations have been cleared');
+
                 // Telling the server to fetch the new affiliation info from the scopus database
                 this.affiliation_manager.fetchAffiliations(this.authors);
+                this.log('Server has been instructed to query new affiliations');
                 // Now, while the server is fetching the new affiliations and writing them to the DataPost file, we are
                 // going to periodically update the display of the
 
@@ -403,6 +432,19 @@
                     }
                 }
                 return blacklist;
+            },
+            /**
+             * Takes a message and pushes it as an event into the logBus, so that a logging component also connected
+             * to the log bus could display the message
+             *
+             * CHANGELOG
+             *
+             * Added 17.10.2019
+             *
+             * @param message
+             */
+            log: function(message) {
+                this.logBus.$emit('logActivity', message);
             }
         },
         created: function () {

@@ -234,5 +234,6 @@ the author affiliation display.
 button has been pressed.
 - Changed the CSS, so that the CSS for the array-text-input component is now also applied in the scopus 
 options page
-- TODO: Add meaningful activity log messages on the author input page
+- Internal optimizations to the array-text-input Vue component
+- Added log messages to the affiliation fetch process of the author-affiliation-listing Vue component
 - TODO: Use Vue.set() within the array-input components instead of a $forceUpdate()

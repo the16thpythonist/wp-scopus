@@ -7,7 +7,7 @@
         -->
         <template v-for="index in Object.keys(associatedData)">
             <div class="array-text-input-element">
-                <input v-on:input="onInput" class="array-text-input" type="text" :placeholder="associatedData[index]" v-model="associatedData[index]">
+                <input v-on:input="onInput" class="array-text-input" type="text" placeholder="enter data" v-model="associatedData[index]">
                 <button v-on:click.prevent="onRemove(index)" class="array-input-button array-input-remove-button">-</button>
             </div>
         </template>
@@ -16,6 +16,10 @@
 </template>
 
 <script>
+    // Changed 17.10.2019
+    // Imported Vue due to the need for calling the Vue.set() and Vue.delete() methods.
+    let Vue = require('vue/dist/vue.js');
+
     module.exports = {
         data: function () {
             // Computing an associative object with indices from the given array
@@ -56,9 +60,16 @@
              * CHANGELOG
              *
              * Added 24.02.2019
+             *
+             * Changed 17.10.2019
+             * Instead of relying on the $forceUpdate function, now using the Vue.set() function to make the v-for
+             * display update.
+             * Also the input does no longer contain a value at the start, as it is quite annoying to delete that every
+             * time before entering a new one.
              */
             onAdd: function () {
-                this.associatedData[this.currentIndex] = 'enter your value here';
+                //this.associatedData[this.currentIndex] = 'enter your value here';
+                Vue.set(this.associatedData, this.currentIndex, '');
                 this.currentIndex += 1;
                 this.emitChange();
             },
@@ -71,10 +82,14 @@
              *
              * Added 24.02.2019
              *
+             * Changed 17.10.2019
+             * Instead relying on the $forceUpdate function, using the Vue.delete() function to update the v-for
+             * display
+             *
              * @param index
              */
             onRemove: function (index) {
-                delete this.associatedData[index];
+                Vue.delete(this.associatedData, index);
                 this.emitChange();
             },
             /**
@@ -84,9 +99,12 @@
              * CHANGELOG
              *
              * Added 24.02.2019
+             *
+             * Changed 17.10.2019
+             * Removed the call to $forceUpdate(), because the v-for display updates with the use of Vue.set() and
+             * Vue.delete() just fine.
              */
             emitChange: function () {
-                this.$forceUpdate();
                 this.$emit('input', Object.values(this.associatedData));
             }
         }
@@ -101,9 +119,5 @@
 
     div.array-text-input-element {
         margin-bottom: 10px;
-    }
-
-    button.array-input-add-button {
-        width: 20px;
     }
 </style>

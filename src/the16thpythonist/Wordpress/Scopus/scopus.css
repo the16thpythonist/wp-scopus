@@ -138,6 +138,8 @@ button.array-input-button:active {
 }
 
 button.array-input-add-button {
+    width: 30px;
+    height: 30px;
     border-radius: 0px;
 }
 
@@ -189,4 +191,8 @@ COMPONENT: activity-log
     margin-top: 20px;
     margin-bottom: 10px;
     padding: 10px;
+}
+
+.activity-log-container p {
+    margin-bottom: 5px;
 }

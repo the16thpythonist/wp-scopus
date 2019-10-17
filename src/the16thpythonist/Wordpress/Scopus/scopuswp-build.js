@@ -410,7 +410,7 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   }
 })()}
 },{"vue":15,"vue-hot-reload-api":12,"vueify/lib/insert-css":17}],5:[function(require,module,exports){
-var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.array-input[data-v-6733cb66] {\n    display: flex;\n    flex-direction: column;\n}\n\ndiv.array-text-input-element[data-v-6733cb66] {\n    margin-bottom: 10px;\n}\n\nbutton.array-input-add-button[data-v-6733cb66] {\n    width: 20px;\n}")
+var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.array-input[data-v-6733cb66] {\n    display: flex;\n    flex-direction: column;\n}\n\ndiv.array-text-input-element[data-v-6733cb66] {\n    margin-bottom: 10px;\n}")
 ;(function(){
 //
 //
@@ -429,6 +429,10 @@ var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.arra
 //
 //
 //
+
+// Changed 17.10.2019
+// Imported Vue due to the need for calling the Vue.set() and Vue.delete() methods.
+let Vue = require('vue/dist/vue.js');
 
 module.exports = {
     data: function () {
@@ -470,9 +474,16 @@ module.exports = {
          * CHANGELOG
          *
          * Added 24.02.2019
+         *
+         * Changed 17.10.2019
+         * Instead of relying on the $forceUpdate function, now using the Vue.set() function to make the v-for
+         * display update.
+         * Also the input does no longer contain a value at the start, as it is quite annoying to delete that every
+         * time before entering a new one.
          */
         onAdd: function () {
-            this.associatedData[this.currentIndex] = 'enter your value here';
+            //this.associatedData[this.currentIndex] = 'enter your value here';
+            Vue.set(this.associatedData, this.currentIndex, '');
             this.currentIndex += 1;
             this.emitChange();
         },
@@ -485,10 +496,14 @@ module.exports = {
          *
          * Added 24.02.2019
          *
+         * Changed 17.10.2019
+         * Instead relying on the $forceUpdate function, using the Vue.delete() function to update the v-for
+         * display
+         *
          * @param index
          */
         onRemove: function (index) {
-            delete this.associatedData[index];
+            Vue.delete(this.associatedData, index);
             this.emitChange();
         },
         /**
@@ -500,7 +515,6 @@ module.exports = {
          * Added 24.02.2019
          */
         emitChange: function () {
-            this.$forceUpdate();
             this.$emit('input', Object.values(this.associatedData));
         }
     }
@@ -510,7 +524,7 @@ module.exports = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"array-input"},[_vm._l((Object.keys(_vm.associatedData)),function(index){return [_c('div',{staticClass:"array-text-input-element"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.associatedData[index]),expression:"associatedData[index]"}],staticClass:"array-text-input",attrs:{"type":"text","placeholder":_vm.associatedData[index]},domProps:{"value":(_vm.associatedData[index])},on:{"input":[function($event){if($event.target.composing){ return; }_vm.$set(_vm.associatedData, index, $event.target.value)},_vm.onInput]}}),_vm._v(" "),_c('button',{staticClass:"array-input-button array-input-remove-button",on:{"click":function($event){$event.preventDefault();return _vm.onRemove(index)}}},[_vm._v("-")])])]}),_vm._v(" "),_c('button',{staticClass:"array-input-button array-input-add-button",on:{"click":function($event){$event.preventDefault();return _vm.onAdd($event)}}},[_vm._v("+")])],2)}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"array-input"},[_vm._l((Object.keys(_vm.associatedData)),function(index){return [_c('div',{staticClass:"array-text-input-element"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.associatedData[index]),expression:"associatedData[index]"}],staticClass:"array-text-input",attrs:{"type":"text","placeholder":"enter data"},domProps:{"value":(_vm.associatedData[index])},on:{"input":[function($event){if($event.target.composing){ return; }_vm.$set(_vm.associatedData, index, $event.target.value)},_vm.onInput]}}),_vm._v(" "),_c('button',{staticClass:"array-input-button array-input-remove-button",on:{"click":function($event){$event.preventDefault();return _vm.onRemove(index)}}},[_vm._v("-")])])]}),_vm._v(" "),_c('button',{staticClass:"array-input-button array-input-add-button",on:{"click":function($event){$event.preventDefault();return _vm.onAdd($event)}}},[_vm._v("+")])],2)}
 __vue__options__.staticRenderFns = []
 __vue__options__._scopeId = "data-v-6733cb66"
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
@@ -524,7 +538,7 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
     hotAPI.reload("data-v-6733cb66", __vue__options__)
   }
 })()}
-},{"vue":15,"vue-hot-reload-api":12,"vueify/lib/insert-css":17}],6:[function(require,module,exports){
+},{"vue":15,"vue-hot-reload-api":12,"vue/dist/vue.js":13,"vueify/lib/insert-css":17}],6:[function(require,module,exports){
 ;(function(){
 //
 //
@@ -856,11 +870,17 @@ module.exports = {
          * now being used. Because when working with an object the automatic change detection does not work!
          * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
          * display can be updated easily.
+         * Also added log messages.
          */
         updateAffiliations: function () {
             let affiliations = this.affiliation_manager.getAffiliations(this.authors);
             for (let id in affiliations) {
                 if (affiliations.hasOwnProperty(id)) {
+
+                    // Logging, that this affiliation has been changed.
+                    if (!this.affiliations.hasOwnProperty(id)) {
+                        this.log(`affiliation with ID '${id}' has been updated`);
+                    }
 
                     // Changed 17.10.2019
                     // using the Vue.set() method now to add a new value to the affiliations object, because that
@@ -875,15 +895,38 @@ module.exports = {
             }
         },
         /**
+         * Clears the assoc. array, which contains the affiliations as well as the array, which contains, whether
+         * they have been white or blacklisted
+         *
+         * CHANGELOG
+         *
+         * Added 17.10.2019
+         */
+        clearAffiliations: function() {
+            this.affiliations = {};
+            this.listing = {};
+        },
+        /**
          * Triggers the server to fetch new affil. info from scopus and updates the display on site.
          *
          * CHANGELOG
          *
          * Added 11.10.2019
+         *
+         * Changed 17.10.2019
+         * Added a call to "clearAffiliations" before actually updating the affiliations.
+         * Also added log messages
          */
         fetchAffiliations: function () {
+            // Changed 17.10.2019
+            // The fetch process is intended to get a fresh set of affiliations, which means that the old ones
+            // have to be cleared first
+            this.clearAffiliations();
+            this.log('Current affiliations have been cleared');
+
             // Telling the server to fetch the new affiliation info from the scopus database
             this.affiliation_manager.fetchAffiliations(this.authors);
+            this.log('Server has been instructed to query new affiliations');
             // Now, while the server is fetching the new affiliations and writing them to the DataPost file, we are
             // going to periodically update the display of the
 
@@ -931,6 +974,19 @@ module.exports = {
                 }
             }
             return blacklist;
+        },
+        /**
+         * Takes a message and pushes it as an event into the logBus, so that a logging component also connected
+         * to the log bus could display the message
+         *
+         * CHANGELOG
+         *
+         * Added 17.10.2019
+         *
+         * @param message
+         */
+        log: function(message) {
+            this.logBus.$emit('logActivity', message);
         }
     },
     created: function () {
