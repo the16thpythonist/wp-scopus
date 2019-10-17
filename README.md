@@ -225,3 +225,14 @@ ls
 - Fixed the scopus author page
     - Added the functionality for blacklisting/whitelisting author affiliations as a Vue component.
     - Removed the author affiliation functionality as plain Javascript
+
+### 0.0.2 - 17.10.2019
+
+- Fixed a bug, where I had left a constant  value to be assigned as the author ids array in the Vue component for 
+the author affiliation display.
+- Added the functionality, that the author affiliation display is updated in real time after the fetch affiliations 
+button has been pressed.
+- Changed the CSS, so that the CSS for the array-text-input component is now also applied in the scopus 
+options page
+- TODO: Add meaningful activity log messages on the author input page
+- TODO: Use Vue.set() within the array-input components instead of a $forceUpdate()

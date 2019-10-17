@@ -322,16 +322,26 @@
              * CHANGELOG
              *
              * Added 10.10.2019
+             *
+             * Changed 17.10.2019
+             * Instead of assigning the new values of the assoc. affiliations dict directly, the function Vue.set() is
+             * now being used. Because when working with an object the automatic change detection does not work!
+             * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
+             * display can be updated easily.
              */
             updateAffiliations: function () {
                 let affiliations = this.affiliation_manager.getAffiliations(this.authors);
                 for (let id in affiliations) {
                     if (affiliations.hasOwnProperty(id)) {
-                        this.affiliations[id] = affiliations[id];
+
+                        // Changed 17.10.2019
+                        // using the Vue.set() method now to add a new value to the affiliations object, because that
+                        // issues Vue to redraw the v-for, which is using the affiliations object!
+                        Vue.set(this.affiliations, id, affiliations[id]);
                         if (affiliations[id].whitelist) {
-                            this.listing[id] = 'white';
+                            Vue.set(this.listing, id, 'white');
                         } else if (affiliations[id].blacklist) {
-                            this.listing[id] = 'black';
+                            Vue.set(this.listing, id, 'black');
                         }
                     }
                 }
@@ -350,6 +360,7 @@
                 // going to periodically update the display of the
 
                 let update_function = this.updateAffiliations;
+
                 let loop = function() {
                     update_function();
                     setTimeout(loop, 2000);

@@ -116,12 +116,12 @@ This component manages the input of all the author specific meta data.
 COMPONENT: array-select-input
  */
 
-#scopus-author-input div.array-input {
+div.array-input {
     padding: 10px;
     background-color: #f7f7f7;
 }
 
-#scopus-author-input button.array-input-button {
+button.array-input-button {
     width: 30px;
     height: 30px;
     font-size: 20px;
@@ -133,15 +133,15 @@ COMPONENT: array-select-input
     border-width: 0px;
 }
 
-#scopus-author-input button.array-input-button:active {
+button.array-input-button:active {
     background-color: #28A46C;
 }
 
-#scopus-author-input button.array-input-add-button {
+button.array-input-add-button {
     border-radius: 0px;
 }
 
-#scopus-author-input button.array-input-remove-button {
+button.array-input-remove-button {
     font-size: 15px;
     width: 26px;
     height: 26px;

@@ -850,16 +850,26 @@ module.exports = {
          * CHANGELOG
          *
          * Added 10.10.2019
+         *
+         * Changed 17.10.2019
+         * Instead of assigning the new values of the assoc. affiliations dict directly, the function Vue.set() is
+         * now being used. Because when working with an object the automatic change detection does not work!
+         * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
+         * display can be updated easily.
          */
         updateAffiliations: function () {
             let affiliations = this.affiliation_manager.getAffiliations(this.authors);
             for (let id in affiliations) {
                 if (affiliations.hasOwnProperty(id)) {
-                    this.affiliations[id] = affiliations[id];
+
+                    // Changed 17.10.2019
+                    // using the Vue.set() method now to add a new value to the affiliations object, because that
+                    // issues Vue to redraw the v-for, which is using the affiliations object!
+                    Vue.set(this.affiliations, id, affiliations[id]);
                     if (affiliations[id].whitelist) {
-                        this.listing[id] = 'white';
+                        Vue.set(this.listing, id, 'white');
                     } else if (affiliations[id].blacklist) {
-                        this.listing[id] = 'black';
+                        Vue.set(this.listing, id, 'black');
                     }
                 }
             }
@@ -878,6 +888,7 @@ module.exports = {
             // going to periodically update the display of the
 
             let update_function = this.updateAffiliations;
+
             let loop = function() {
                 update_function();
                 setTimeout(loop, 2000);
@@ -1225,7 +1236,7 @@ module.exports = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"author-input-component"},[_c('h2',[_vm._v("Author Information")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("First name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.firstName),expression:"firstName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.firstName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.firstName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Last name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.lastName),expression:"lastName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.lastName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.lastName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Scopus ID:")]),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.scopusIDs},on:{"input":_vm.onIDChange}})],1),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Categories")]),_vm._v(" "),_c('v-array-select-input',{attrs:{"array":_vm.categories,"options":_vm.options},on:{"input":_vm.onCategoryChange}})],1),_vm._v(" "),_c('v-author-affiliation-listing',{ref:"affiliations",attrs:{"affiliations":_vm.affiliations,"logBus":_vm.logBus,"authors":['35313939900']}}),_vm._v(" "),_c('v-activity-log',{attrs:{"messages":[],"logBus":_vm.logBus}}),_vm._v(" "),_c('button',{staticClass:"material-button",on:{"click":function($event){$event.preventDefault();return _vm.onSave($event)}}},[_vm._v("save")])],1)}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"author-input-component"},[_c('h2',[_vm._v("Author Information")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("First name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.firstName),expression:"firstName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.firstName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.firstName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Last name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.lastName),expression:"lastName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.lastName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.lastName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Scopus ID:")]),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.scopusIDs},on:{"input":_vm.onIDChange}})],1),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Categories")]),_vm._v(" "),_c('v-array-select-input',{attrs:{"array":_vm.categories,"options":_vm.options},on:{"input":_vm.onCategoryChange}})],1),_vm._v(" "),_c('v-author-affiliation-listing',{ref:"affiliations",attrs:{"affiliations":_vm.affiliations,"logBus":_vm.logBus,"authors":_vm.scopusIDs}}),_vm._v(" "),_c('v-activity-log',{attrs:{"messages":[],"logBus":_vm.logBus}}),_vm._v(" "),_c('button',{staticClass:"material-button",on:{"click":function($event){$event.preventDefault();return _vm.onSave($event)}}},[_vm._v("save")])],1)}
 __vue__options__.staticRenderFns = [function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_vm._v("\n        Use these following input fields to enter the necessary information about the author. "),_c('br'),_vm._v("\n        (Note that the first and last name will be used as the title of the author post, replacing any custom title\n        entered), "),_c('br'),_vm._v("\n        One author might be associated with multiple scopus author ids. This can be due to a mistake within the\n        scopus database. For such a case multiple ids can be added to the author. All of them will be considered\n        when fetching affiliation info and while requesting new publications from the scopus database. "),_c('br'),_vm._v("\n        One author usually works in a specific scientific field or a work group. For this case a category can be\n        chosen. It is assumed, that if the author has these \"specialties\", every publication he has co-authored\n        will be (at least partially) connected to that topic. Thus every publication fetched, which contains this\n        author will be classified with his categories.\n    ")])}]
 __vue__options__._scopeId = "data-v-6b0c4292"
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")

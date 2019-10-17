@@ -48,7 +48,7 @@
         <!--
         This section is for the functionality to display the affiliations for an author
         -->
-        <v-author-affiliation-listing ref="affiliations" :affiliations="affiliations" :logBus="logBus" :authors="['35313939900']"></v-author-affiliation-listing>
+        <v-author-affiliation-listing ref="affiliations" :affiliations="affiliations" :logBus="logBus" :authors="scopusIDs"></v-author-affiliation-listing>
         <v-activity-log :messages="[]" :logBus="logBus"></v-activity-log>
 
         <!--
