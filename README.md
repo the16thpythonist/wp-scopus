@@ -236,4 +236,3 @@ button has been pressed.
 options page
 - Internal optimizations to the array-text-input Vue component
 - Added log messages to the affiliation fetch process of the author-affiliation-listing Vue component
-- TODO: Use Vue.set() within the array-input components instead of a $forceUpdate()

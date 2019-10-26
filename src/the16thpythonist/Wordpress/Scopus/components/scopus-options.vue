@@ -45,7 +45,7 @@
             <v-array-text-input @input="onCategoriesChange" :array="categories"></v-array-text-input>
         </div>
 
-        <button @click="save">save changes</button>
+        <button class="material-button" @click="save">save changes</button>
 
     </div>
 </template>
