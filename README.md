@@ -236,3 +236,8 @@ button has been pressed.
 options page
 - Internal optimizations to the array-text-input Vue component
 - Added log messages to the affiliation fetch process of the author-affiliation-listing Vue component
+
+### 0.0.3 - 28.11.2019
+
+- Added the feature, that when a PublicationPost is being deleted by trashing it in the dashboard, a boolean flag will 
+be added to the cache entry, which will prevent it from being fetched by scopus in the future

@@ -198,6 +198,43 @@ class PublicationMetaCache
     }
 
     /**
+     * Given the scopus id for the entry and a string key name, this method will check if the cache entry array
+     * associated with the given scopus id contains an entry with with the given key name.
+     *
+     * CHANGELOG
+     *
+     * Added 28.11.2019
+     *
+     * @param string $scopus_id
+     * @param string $key
+     * @return bool
+     */
+    public function keyExists(string $scopus_id, string $key) {
+        $publication_exists = array_key_exists($scopus_id, $this->data);
+        $exists = $publication_exists && array_key_exists($key, $this->data[$scopus_id]);
+        return $exists;
+    }
+
+    /**
+     * Given the scopus id and the string key name, this function will return the value saved under the given key
+     * within the entry of the publication identified by the given scopus id
+     *
+     * It should be noted, that this function does not check, whether the key exists for the given scopus id or not.
+     * This check for key existence should be done before calling this function!
+     *
+     * CHANGELOG
+     *
+     * Added 28.11.2019
+     *
+     * @param string $scopus_id
+     * @param string $key
+     * @return mixed
+     */
+    public function readMeta(string $scopus_id, string $key) {
+        return $this->data[$scopus_id][$key];
+    }
+
+    /**
      * Initializes the value for the given scopus id as an empty array, if the key doesn't exist yet
      *
      * The main data structure, that is supposed to be represented by this object is supposed to be an array whose

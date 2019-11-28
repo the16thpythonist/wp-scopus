@@ -8,6 +8,7 @@
 
 namespace the16thpythonist\Wordpress\Scopus;
 
+use the16thpythonist\KITOpen\Publication;
 use the16thpythonist\Wordpress\Base\PostRegistration;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
@@ -82,7 +83,10 @@ class PublicationPostModification implements PostRegistration
      * Changed 12.02.2019
      * Added the method, that registers the comments to be disabled for the post type.
      *
-     * @since 0.0.0.2
+     * Changed 28.11.2019
+     * Applying the static method "trashPost" to the "wp_trash_post" hook now. Whenever a publication post is being
+     * trashed, a new boolean flag is added to the meta cache, which will prevent the publication from being added
+     * again.
      *
      * @return void
      */
@@ -96,6 +100,10 @@ class PublicationPostModification implements PostRegistration
         add_action('init', array($this, 'registerTaxonomies'));
 
         add_filter('save_post', array($this, 'savePost'), 20, 2);
+        // 28.11.2019
+        // This filter will add a new flag to the publications meta cache entry, which will prevent the publication to
+        // be fetched again after it has been trashed once.
+        add_filter('wp_trash_post', array($this, 'trashPost'), 20, 2);
         //add_filter('wp_insert_post_data', array($this, 'insertPostData'), 20, 2);
 
         // 12.02.2019
@@ -184,6 +192,10 @@ class PublicationPostModification implements PostRegistration
      * THIS FUNCTION IS COMPLETE BULLSHIT.
      * It does what it is supposed to do, but its like super hack-y.
      *
+     * CHANGELOG
+     *
+     * Added 20.10.2018
+     *
      * @param $post_id
      * @param \WP_Post $post
      * @return mixed
@@ -219,4 +231,55 @@ class PublicationPostModification implements PostRegistration
         return $post_id;
     }
 
+    /**
+     * Filter function for "wp_trash_post" event. With the trashing adds a boolean flag "exclude" to the publication
+     * meta cache, which will prevent the post from being fetched in the future.
+     *
+     * CHANGELOG
+     *
+     * Added 28.11.209
+     *
+     * @param $post_id
+     */
+    public static function trashPost($post_id) {
+       /*
+        * This function will be hooked as a filter into the "wp_trash_post" hook. It is thus being called when a
+        * publication post is being deleted.
+        * What does it have to do? The scopus system potentially loads way to many publications onto the site, which
+        * are not all being needed. These excess publications can then obviously be deleted by trashing them, but the
+        * problem is, that the next fetch process would just load them into the page again!
+        * Now the trash button should create a new entry within the publication cache, which states, that this
+        * publication is not to be loaded onto the page again.
+        */
+
+        // The function will obviously only be executed for publication posts
+        if (get_post_type($post_id) !== PublicationPost::$POST_TYPE) {
+            return;
+        }
+
+
+        $publication_cache = new PublicationMetaCache();
+
+        // First we need the relevant information from the publication
+        $publication_post = new PublicationPost($post_id);
+
+        // If there is no entry for the publication yet, we will create one.
+        if (!$publication_cache->contains($publication_post->scopus_id)) {
+            $publication_cache->write(
+                $publication_post->scopus_id,
+                $publication_post->title,
+                $publication_post->published
+            );
+        }
+
+        // Then we add an additional boolean field "exclude", which will signal whether the publication is to be
+        // fetched in the future
+        $publication_cache->writeMeta(
+            $publication_post->scopus_id,
+            'exclude',
+            true
+        );
+
+        $publication_cache->save();
+    }
 }

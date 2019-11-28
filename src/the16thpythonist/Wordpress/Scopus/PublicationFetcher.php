@@ -176,6 +176,12 @@ class PublicationFetcher
      * given a count value during the creation of the fetcher object, the loop will exit after that many publications
      * were inserted.
      *
+     * Changed 28.11.2019
+     * Moved the whole process of checking whether a cached publication is too old into its own function
+     * "checkCacheTooOld"
+     * Calling a new function "checkCacheExcluded", which will check the publication meta cache, for the boolean exclude
+     * flag being set, which can be used to exclude a publication from being fetched from scopus ever again.
+     *
      * @since 0.0.0.2
      *
      * @return \Generator
@@ -202,16 +208,15 @@ class PublicationFetcher
             // Getting the title of the publication from the cache now, because before it would just use the title
             // of the last published publication for all log entries after that
             if ($this->publication_cache->contains($scopus_id)) {
-                $date = $this->publication_cache->getPublishingDate($scopus_id);
-                $title = $this->publication_cache->getTitle($scopus_id);
-                $time_difference = strtotime($date) - strtotime($this->args['date_limit']);
-                if ($time_difference <= 0) {
-                    $this->log->info(sprintf('DISMISSED, TOO OLD (CACHED): "%s" PUBLISHED "%s"', $title, $date));
-                    $this->publication_cache->write(
-                        $scopus_id,
-                        $title,
-                        $date
-                    );
+                // First we check if the publication is too old
+                if ($this->checkCacheTooOld($scopus_id)) {
+                    continue;
+                }
+
+                // 28.11.2019
+                // Now we also need to check for the "exclude" boolean flag within the meta cache. If it is true the
+                // publication should also not be loaded...
+                if ($this->checkCacheExclude($scopus_id)) {
                     continue;
                 }
             }
@@ -407,6 +412,56 @@ class PublicationFetcher
             $this->log->error('THERE WAS A PROBLEM WITH GETTING THE TAGS OF ' . $this->scopus_id);
             return array();
         }
+    }
+
+    /**
+     * Given a scopus id, this function will check if the publication has been flagged with the boolean "exclude" flag
+     * within the publication meta cache. If it has been flagged TRUE will be returned, otherwise false.
+     * The exclude flag indicates, whether the publication has already been deleted once, and thus should not be
+     * fetched again.
+     * The method additionally creates a log message, informing, that the publication has been excluded.
+     *
+     * CHANGELOG
+     *
+     * Added 28.11.2019
+     *
+     * @param string $scopus_id
+     * @return bool
+     */
+    public function checkCacheExclude(string $scopus_id) {
+        $exclude_key = 'exclude';
+        $title = $this->publication_cache->getTitle($scopus_id);
+
+        if ($this->publication_cache->keyExists($scopus_id, $exclude_key)) {
+            $exclude = $this->publication_cache->readMeta($scopus_id, $exclude_key);
+            if ($exclude) {
+                $this->log->info(sprintf('DISMISSED, EXCLUDED (CACHED): "%s"', $title));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Given the scopus id, this function will retrieve the publishing date and the title from the publication meta
+     * cache and compare it to the given date_limit for the fetch proćess. If the publication is too old for the limit
+     * TRUE will be returned, otherwise FALSE.
+     * The method additionally creates a log info message, informing, that the publication is to old.
+     *
+     * @param string $scopus_id
+     * @return bool
+     */
+    public function checkCacheTooOld(string $scopus_id) {
+        $date = $this->publication_cache->getPublishingDate($scopus_id);
+        $title = $this->publication_cache->getTitle($scopus_id);
+        $time_difference = strtotime($date) - strtotime($this->args['date_limit']);
+        if ($time_difference <= 0) {
+            $this->log->info(sprintf('DISMISSED, TOO OLD (CACHED): "%s" PUBLISHED "%s"', $title, $date));
+            return true;
+        }
+
+        return false;
     }
 
 }
