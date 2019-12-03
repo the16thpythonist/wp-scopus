@@ -182,6 +182,11 @@ class PublicationFetcher
      * Calling a new function "checkCacheExcluded", which will check the publication meta cache, for the boolean exclude
      * flag being set, which can be used to exclude a publication from being fetched from scopus ever again.
      *
+     * Changed 03.12.2019
+     * Added the additional entry "topics" to the args array, which is used to insert new publications. This is a string
+     * which is essentially the concatenation of the categories array. This string will be used to sort
+     * the admin list view of the publication posts by the used topics.
+     *
      * @since 0.0.0.2
      *
      * @return \Generator
@@ -283,6 +288,14 @@ class PublicationFetcher
             // and that has to be evaluated by another script or manually at the moment.
             // 31.12.2018
             // Added the 'author_affiliations' argument to also be inserted.
+            // 03.12.2019
+            // Moved the computation of the categories array outside of the array definition.
+            // Added a new field to the args array "topics". This field will contain a string, which is the
+            // concatenation of the categories array. This string is being saved as a meta key and will help to order
+            // the admin list view by the topics
+            $categories = array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications'));
+            $topics = array_intersect($categories, ScopusOptions::getAuthorCategories());
+            sort($topics);
             $args = array(
                 'title'                 => $this->title,
                 'status'                => ($collaboration == 'ANY' ? 'draft' : 'publish'),
@@ -298,8 +311,9 @@ class PublicationFetcher
                 'authors'               => $authors,
                 'author_count'          => $author_count,
                 'author_affiliations'   => $author_affiliations,
-                'categories'            => array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications')),
-                'collaboration'         => $collaboration
+                'categories'            => $categories,
+                'collaboration'         => $collaboration,
+                'topics'                => implode(', ', $topics),
             );
             try{
                 $this->post_id = PublicationPost::insert($args);

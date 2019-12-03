@@ -312,6 +312,29 @@ class PublicationPost extends PostPost
         return 'http://dx.doi.org/' . $this->doi;
     }
 
+
+    /**
+     * Returns an array with those category strings defined as possible topics within the scopus options site.
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @return array
+     */
+    public function getTopics() {
+        /*
+         * Topics indirectly refers to the categories. Topics will only return those category strings, which are also
+         * listed within the scopus configuration page and no additional "management" categories.
+         */
+        $categories = $this->getCategories();
+        // We will just build the array intersect of the categories and the possible topics from the settings page
+        $options = ScopusOptions::getAuthorCategories();
+        $topics = array_intersect($categories, $options);
+        sort($topics);
+        return $topics;
+    }
+
     # ##############
     # STATIC METHODS
     # ##############
@@ -483,6 +506,10 @@ class PublicationPost extends PostPost
      *
      * Added 12.02.2019
      *
+     * Changed 03.12.2019
+     * Added an additional entry into the mapping array, which inserts the "topics" string as a meta
+     * value to the post.
+     *
      * @param array $args
      * @return array
      */
@@ -498,7 +525,8 @@ class PublicationPost extends PostPost
             'eid'                   => 'meta_input/eid',
             'author_count'          => 'meta_input/author_count',
             'issn'                  => 'meta_input/issn',
-            'author_affiliations'   => 'meta_input/author_affiliations'
+            'author_affiliations'   => 'meta_input/author_affiliations',
+            'topics'                => 'meta_input/topics',
         );
         $postarr = PostUtil::subArrayMapping($mapping, $args);
         $postarr['post_status'] = 'publish';

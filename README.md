@@ -241,3 +241,15 @@ options page
 
 - Added the feature, that when a PublicationPost is being deleted by trashing it in the dashboard, a boolean flag will 
 be added to the cache entry, which will prevent it from being fetched by scopus in the future
+
+### 0.0.4 - 03.12.2019
+
+- Modified the admin list view of the publication post type
+    - The wordpress author will no longer be displayed. instead it will display
+    the authors of the publication, but only the observed authors, which are contained 
+    as AuthorPosts on the site
+    - The categories are no longer listed, instead it is now the "Topics". These are essentially 
+    the categories, but only those that are listed in the scopus options... This field can also be 
+    used to sort the list view by.
+    - Added a column "Scopus ID", which will display the scopus ID, but the ID is a link at the 
+    same time. The link will redirect to the DOI page for that publication

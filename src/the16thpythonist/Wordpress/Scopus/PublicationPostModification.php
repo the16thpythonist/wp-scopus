@@ -88,6 +88,9 @@ class PublicationPostModification implements PostRegistration
      * trashed, a new boolean flag is added to the meta cache, which will prevent the publication from being added
      * again.
      *
+     * Changed 03.12.2019
+     * Added the required filters to modify the admin list view for this post type.
+     *
      * @return void
      */
     public function register()
@@ -109,6 +112,13 @@ class PublicationPostModification implements PostRegistration
         // 12.02.2019
         // Disabling the comments under a scopus publication
         $this->registerDisabledComments();
+
+        // 03.12.2019
+        // All these filters are required to modify the admin list view
+        add_filter('manage_post_posts_columns', array($this, 'managePostColumns'), 10, 1);
+        add_action('manage_post_posts_custom_column', array($this, 'postColumnContent'), 10, 2);
+        add_filter('manage_edit-post_sortable_columns', array($this, 'addSortableColumns'), 10, 1);
+        add_action('pre_get_posts', array($this, 'customColumnSorting'));
     }
 
     /**
@@ -281,5 +291,134 @@ class PublicationPostModification implements PostRegistration
         );
 
         $publication_cache->save();
+    }
+
+    /*
+     * MODIFYING THE ADMIN COLUMNS
+     * What are the admin columns? When being in the admin dashboard and looking at a post type, the first thing that
+     * is being displayed is a sort of list view with all the posts. This list view has certain columns, that display
+     * certain information about the post. These columns can be modified to display custom data, which better suits the
+     * custom post type.
+     * This modification is being done by manipulating various filters.
+     *
+     * The first thing to be done is to register an additional filter to the hook "manage_[posttype]_posts_column"
+     * This function gets passed an array of columns to be registered and can be modified with additional ones.
+     *
+     * Then the hook action hook "manage_[posttype]_posts_custom_column" can be used to echo the content for one
+     * specific column.
+     *
+     * At last, we can implement sorting of the posts by a custom column. For that we first have to implement a filter
+     * to the hook "manage_edit-[posttype]-sortable-columns" and add the column keys to that.
+     * After that we have to implement custom wordpress query for this column in the "pre_get_posts" hook.
+     */
+
+    /**
+     * Filter function for the hook "manage_post_posts_column", which will register custom columns for the admin list
+     * view of this post type.
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @param $columns
+     * @return array
+     */
+    public function managePostColumns($columns) {
+        /*
+         * $columns is an associative array, which contains a list of all the columns to be registered for the  admin
+         * list view of this post type. Simply adding or removing entries from this array should do the trick.
+         * The keys of the array are slugs to identify the columns and the values are the headers, which describe the
+         * content of the columns within the dashboard
+         *
+         * The standard array contains the keys "cb", "title", "author", "categories", "tags", "comments", "date"
+         */
+        $columns = array(
+            'cb'            => $columns['cb'],
+            'title'         => $columns['title'],
+            'authors'       => __('Authors'),
+            'scopusID'      => __('Scopus ID'),
+            'topics'        => __('Topics'),
+            'tags'          => $columns['tags'],
+            'date'          => $columns['date'],
+        );
+
+        return $columns;
+    }
+
+    /**
+     * Filter function for the action hook "manage_post_posts_custom_column". Depending on the passed column key and
+     * the post ID, this function will echo the content to be displayed in the corresponding row of the admin list view
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @param $column
+     * @param $post_id
+     */
+    public function postColumnContent($column, $post_id) {
+        /*
+         * $column holds the string key of which type of column is triggering this action and the $post_id holds the
+         * ID of the post for which the column is to be drawn.
+         * This function thus has to check for the string key of what has to be put to the screen, extract this info
+         * from the post object and then echo this data.
+         */
+
+        $publication_post = new PublicationPost($post_id);
+
+        if ($column === 'authors') {
+            $author_observatory = new AuthorObservatory();
+            $authors = $author_observatory->getObservedAuthorsPublicationPost($publication_post);
+            // Concat the array to a string
+            echo implode(', ', $authors);
+        }
+
+        if ($column === 'scopusID') {
+            // Displaying the scopus ID, but it will be a link to the scopus site at the same time
+            $template = "<a href='%s'>%s</a>";
+            echo sprintf($template, $publication_post->getURL(), $publication_post->scopus_id);
+        }
+
+        if ($column === 'topics') {
+            $topics = $publication_post->getTopics();
+            echo implode(', ', $topics);
+        }
+
+    }
+
+    /**
+     * Filter, which will add the sortable columns to the post type.
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @param $columns
+     * @return mixed
+     */
+    public function addSortableColumns($columns) {
+        $columns['topics'] = 'topics';
+        return $columns;
+    }
+
+    /**
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @param $query
+     */
+    public function customColumnSorting($query) {
+
+        // This is important to only enable this code to be executed in the admin list view!
+        if( ! is_admin() || ! $query->is_main_query() ) {
+            return;
+        }
+
+        if ('topics' === $query->get('orderby')) {
+            $query->set('orderby', 'meta_value');
+            $query->set('meta_key', 'topics');
+        }
     }
 }

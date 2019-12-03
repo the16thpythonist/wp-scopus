@@ -401,6 +401,22 @@ class AuthorPost extends PostPost
         return $args;
     }
 
+    /**
+     * Creates and returns the abbreviated name of the author, which consists of the first character of the first name
+     * a dot and the last name.
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @return string
+     */
+    public function getAbbreviatedName() {
+        $format = "%s. %s";
+        $first_character = strtoupper($this->first_name[0]);
+        return sprintf($format, $first_character, $this->last_name);
+    }
+
     // **************
     // STATIC METHODS
     // **************

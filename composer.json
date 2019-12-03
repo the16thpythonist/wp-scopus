@@ -1,7 +1,7 @@
 {
   "name": "the16thpythonist/wp-scopus",
   "description": "Adding various post types to Wordpress to enable scopus publication support",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "project",
   "repositories":[
     {

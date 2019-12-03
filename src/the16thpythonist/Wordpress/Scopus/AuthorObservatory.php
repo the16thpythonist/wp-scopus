@@ -409,4 +409,31 @@ class AuthorObservatory
     public function getAuthorIDs() {
         return array_keys($this->authors_map);
     }
+
+    /**
+     * Given a publication post, this function will return a list with all the AuthorPost objects, for all those
+     * observed authors, which have worked on this very publication
+     *
+     * CHANGELOG
+     *
+     * Added 03.12.2019
+     *
+     * @param PublicationPost $publication_post
+     * @return array
+     */
+    public function getObservedAuthorsPublicationPost(PublicationPost $publication_post) {
+        $author_terms = $publication_post->getAuthorTerms();
+        $authors = array();
+
+        foreach ($author_terms as $term) {
+            $author_id = $term->slug;
+            if (array_key_exists($author_id, $this->authors_map)) {
+                $author = $this->authors_map[$author_id];
+                $author_name = $author->getAbbreviatedName();
+                $authors[] = $author_name;
+            }
+        }
+
+        return $authors;
+    }
 }
