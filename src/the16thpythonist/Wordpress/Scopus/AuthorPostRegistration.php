@@ -524,6 +524,7 @@ class AuthorPostRegistration implements PostRegistration
      * to the hook "manage_edit-[posttype]-sortable-columns" and add the column keys to that.
      * After that we have to implement custom wordpress query for this column in the "pre_get_posts" hook.
      */
+
     /**
      * Filter function for the hook "manage_author_posts_column", which will register additional, custom columns to the
      * list view of this post type within the admin dashboard.

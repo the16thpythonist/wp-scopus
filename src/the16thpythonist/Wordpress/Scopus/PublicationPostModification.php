@@ -473,9 +473,10 @@ class PublicationPostModification implements PostRegistration
         if ($column === 'collaboration') {
             $collaboration = $publication_post->getCollaboration();
             if ($collaboration !== 'NONE') {
-                $template = "<a href='/wp-admin/edit.php?post_type=%s&collaboration=%s'>%s</a>";
+                $template = "<a href='%s?post_type=%s&collaboration=%s'>%s</a>";
                 echo sprintf(
                     $template,
+                    admin_url('edit.php'),
                     $publication_post::$POST_TYPE,
                     $collaboration,
                     $collaboration
