@@ -255,7 +255,7 @@ be added to the cache entry, which will prevent it from being fetched by scopus 
     same time. The link will redirect to the DOI page for that publication
     
     
-### 0.0.5
+### 0.0.5 - 10.12.2019
 
 - Modified the admin list view of the publication post type
     - Changed the column of "Scopus ID" to "DOI". The entries in this column are links. 
