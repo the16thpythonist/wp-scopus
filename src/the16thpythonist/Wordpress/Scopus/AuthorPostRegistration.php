@@ -95,6 +95,10 @@ class AuthorPostRegistration implements PostRegistration
      * Changed 24.02.2019
      * Moved the ajax registrations into an own method and calling it here.
      *
+     * Changed 10.12.2019
+     * Added the call to the function "registerAdminListViewModifications", which will register all the callbacks, that
+     * are neceassary for the custom behaviour of the post types list view in the admin area of the site.
+     *
      * @since 0.0.0.0
      */
     public function register() {
@@ -104,9 +108,62 @@ class AuthorPostRegistration implements PostRegistration
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
 
+        // 10.12.2019
+        // Creates a custom list view of the posts in the admin area
+        $this->registerAdminListViewModification();
+
         // 24.02.2019
         // Moved the actual ajax registration into its own method
         $this->registerAJAX();
+    }
+
+    /**
+     * Wraps the callback registrations for all the hooks, that are involved in modifying the list view of this post
+     * type  within the admin area of the site
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     */
+    public function registerAdminListViewModification(){
+
+        // This filter will be used to define, which columns the list view is supposed to have
+        add_filter(
+            $this->insertPostType('manage_%s_posts_columns'),
+            array($this, 'manageAuthorColumns'),
+            10, 1
+        );
+
+        // This action will be used to generate the actual contents for the columns
+        add_action(
+            $this->insertPostType('manage_%s_posts_custom_column'),
+            array($this, 'contentAuthorColumns'),
+            10, 2
+        );
+    }
+
+    /**
+     * This function takes a string, which has to contain exactly one string position for inserting a
+     * string with the "sprintf" function.
+     * This position will be inserted with the post type string of this class.
+     * This function will be needed in situations, where the name of a hook is dynamically dependant on the post type
+     * for example.
+     *
+     * EXAMPLE
+     *
+     * $this->post_type = "author"
+     * $this->insertPostType("manage_%s_posts")
+     * >> "manage_author_posts"
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     *
+     * @param string $template
+     * @return string
+     */
+    public function insertPostType(string $template) {
+        return sprintf($template, $this->post_type);
     }
 
     /**
@@ -445,6 +502,86 @@ class AuthorPostRegistration implements PostRegistration
         }
     }
 
+    // **********************
+    // MODIFY ADMIN LIST VIEW
+    // **********************
+
+    /*
+     * MODIFYING THE ADMIN COLUMNS
+     * What are the admin columns? When being in the admin dashboard and looking at a post type, the first thing that
+     * is being displayed is a sort of list view with all the posts. This list view has certain columns, that display
+     * certain information about the post. These columns can be modified to display custom data, which better suits the
+     * custom post type.
+     * This modification is being done by manipulating various filters.
+     *
+     * The first thing to be done is to register an additional filter to the hook "manage_[posttype]_posts_column"
+     * This function gets passed an array of columns to be registered and can be modified with additional ones.
+     *
+     * Then the hook action hook "manage_[posttype]_posts_custom_column" can be used to echo the content for one
+     * specific column.
+     *
+     * At last, we can implement sorting of the posts by a custom column. For that we first have to implement a filter
+     * to the hook "manage_edit-[posttype]-sortable-columns" and add the column keys to that.
+     * After that we have to implement custom wordpress query for this column in the "pre_get_posts" hook.
+     */
+    /**
+     * Filter function for the hook "manage_author_posts_column", which will register additional, custom columns to the
+     * list view of this post type within the admin dashboard.
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     *
+     * @param $columns
+     * @return array
+     */
+    public function manageAuthorColumns($columns) {
+        /*
+         * $columns is an associative array, which contains a list of all the columns to be registered for the  admin
+         * list view of this post type. Simply adding or removing entries from this array should do the trick.
+         * The keys of the array are slugs to identify the columns and the values are the headers, which describe the
+         * content of the columns within the dashboard
+         *
+         * The standard array contains the keys "cb", "title", "author", "categories", "tags", "comments", "date"
+         */
+        $columns = array(
+            'cb'                => $columns['cb'],
+            'title'             => $columns['title'],
+            'authorID'          => __('Author ID'),
+            'topic'             => __('Topic'),
+            'date'              => $columns['date']
+        );
+
+        return $columns;
+    }
+
+    /**
+     * Callback function for the action hook "manage_author_posts_custom_column". Depending on the passed column key and
+     * the post ID, this function will echo the content to be displayed in the corresponding row of the admin list view
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     *
+     * @param $column
+     * @param $post_id
+     */
+    public function contentAuthorColumns($column, $post_id) {
+        /*
+         * Right now the content of the fields are being generated by simply putting the strings of the items separated
+         * by commas.
+         */
+
+        $author_post = new AuthorPost($post_id);
+        if ($column === 'authorID') {
+            echo implode(', ', $author_post->author_ids);
+        }
+
+        if ($column === 'topic') {
+            echo implode(', ', $author_post->categories);
+        }
+
+    }
 
     // **************
     // STATIC METHODS

@@ -253,3 +253,20 @@ be added to the cache entry, which will prevent it from being fetched by scopus 
     used to sort the list view by.
     - Added a column "Scopus ID", which will display the scopus ID, but the ID is a link at the 
     same time. The link will redirect to the DOI page for that publication
+    
+    
+### 0.0.5
+
+- Modified the admin list view of the publication post type
+    - Changed the column of "Scopus ID" to "DOI". The entries in this column are links. 
+    These links redirect to the page, where the actual paper can be downloaded
+    - Added the column "Collaboration", which displays the collaboration tag given to 
+    that publication, in case it has one. For the case of the Collaboration Tag being 
+    "NONE" nothing will be displayed in the fields of this column
+    - Reordered the columns to: Title->Authors->Topics->DOI->Collaboration->Tags
+    - Did some refactoring code-wise to make the code for the list view modification a 
+    a little bit cleaner
+- Modified the admin list view of the author post type
+    - The scopus author ID for that author will now be displayed
+    - The topics, which this author publishes for are now also being displayed.
+ 

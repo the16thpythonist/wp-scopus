@@ -58,7 +58,15 @@
 
         Changed 11.10.2019
         Moved the button to the bottom of thee page, so it is clear, that it will also save the affiliations
+
+        Changed 03.12.2019
+        Added an additional header and a text box to make it more clear, that the save button HAS TO BE USED to save
+        the changes for ALL of this section
         -->
+        <h2>Save Changes</h2>
+        <p>
+            Use the button below to save all the changes made in this section about the author meta information!
+        </p>
         <button @click.prevent="onSave" class="material-button">save</button>
     </div>
 </template>
@@ -204,8 +212,8 @@
                     'first_name':   this.firstName,
                     'last_name':    this.lastName
                 };
-                console.log(data);
-                console.log(this.scopusIDs);
+                //console.log(data);
+                //console.log(this.scopusIDs);
 
                 ajax.update(data);
 
@@ -220,6 +228,10 @@
                 if (window.location.pathname.includes('post-new.php')) {
                     this.redirectEdit();
                 }
+
+                // 03.11.2019
+                // Displaying a message in the activity log, after the info has been saved to increase responsiveness
+                this.logBus.$emit('logActivity', 'Changes have been saved!');
 
             },
             /**

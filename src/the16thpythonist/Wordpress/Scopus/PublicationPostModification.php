@@ -91,6 +91,11 @@ class PublicationPostModification implements PostRegistration
      * Changed 03.12.2019
      * Added the required filters to modify the admin list view for this post type.
      *
+     * Changed 10.12.2019
+     * Did a litlle bit of refactoring. Instead of registering the callbacks for the modification of the admin list
+     * view of the posts within this method, I moved them to the separate method "registerAdminListViewModification"
+     * and this method is being called here.
+     *
      * @return void
      */
     public function register()
@@ -114,11 +119,70 @@ class PublicationPostModification implements PostRegistration
         $this->registerDisabledComments();
 
         // 03.12.2019
-        // All these filters are required to modify the admin list view
-        add_filter('manage_post_posts_columns', array($this, 'managePostColumns'), 10, 1);
-        add_action('manage_post_posts_custom_column', array($this, 'postColumnContent'), 10, 2);
-        add_filter('manage_edit-post_sortable_columns', array($this, 'addSortableColumns'), 10, 1);
-        add_action('pre_get_posts', array($this, 'customColumnSorting'));
+        // This function wraps all the callback registrations needed to modify the list view within the admin area
+        $this->registerAdminListViewModification();
+    }
+
+    /**
+     * Wraps the callback registrations for all the hooks, that are involved in modifying the list view of this post
+     * type  within the admin area of the site
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     */
+    public function registerAdminListViewModification(){
+
+        // This filter will be used to define, which columns the list view is supposed to have
+        add_filter(
+            $this->insertPostType('manage_%s_posts_columns'),
+            array($this, 'managePostColumns'),
+            10, 1
+        );
+
+        // This action will be used to generate the actual contents for the columns
+        add_action(
+            $this->insertPostType('manage_%s_posts_custom_column'),
+            array($this, 'postColumnContent'),
+            10, 2
+        );
+
+        // This filter adds columns, which can be used to sort the list by
+        add_filter(
+            $this->insertPostType('manage_edit-post_sortable_columns'),
+            array($this, 'addSortableColumns'),
+            10, 1
+        );
+
+        // Within this callback we define a custom query, which will enable the sorting by the custom column data
+        add_action(
+            'pre_get_posts',
+            array($this, 'customColumnSorting')
+        );
+    }
+
+    /**
+     * This function takes a string, which has to contain exactly one string position for inserting a
+     * string with the "sprintf" function.
+     * This position will be inserted with the post type string of this class.
+     * This function will be needed in situations, where the name of a hook is dynamically dependant on the post type
+     * for example.
+     *
+     * EXAMPLE
+     *
+     * $this->post_type = "author"
+     * $this->insertPostType("manage_%s_posts")
+     * >> "manage_author_posts"
+     *
+     * CHANGELOG
+     *
+     * Added 10.12.2019
+     *
+     * @param string $template
+     * @return string
+     */
+    public function insertPostType(string $template) {
+        return sprintf($template, $this->post_type);
     }
 
     /**
@@ -320,6 +384,12 @@ class PublicationPostModification implements PostRegistration
      *
      * Added 03.12.2019
      *
+     * Changed 10.12.2019
+     * Replaced the field "scopusID" which contains the scopus ID of the publication with the field "doi", which
+     * contains the doi of the publication.
+     * Also placed the DOI to appear after the topics now.
+     * Added an additional field "collaboration" to appear after the DOI
+     *
      * @param $columns
      * @return array
      */
@@ -332,14 +402,19 @@ class PublicationPostModification implements PostRegistration
          *
          * The standard array contains the keys "cb", "title", "author", "categories", "tags", "comments", "date"
          */
+
+        // 10.12.2019
+        // Changed the display of the Scopus ID to the display of the DOI of the publication
+        // Added the field "collaboration"
         $columns = array(
-            'cb'            => $columns['cb'],
-            'title'         => $columns['title'],
-            'authors'       => __('Authors'),
-            'scopusID'      => __('Scopus ID'),
-            'topics'        => __('Topics'),
-            'tags'          => $columns['tags'],
-            'date'          => $columns['date'],
+            'cb'                => $columns['cb'],
+            'title'             => $columns['title'],
+            'authors'           => __('Authors'),
+            'topics'            => __('Topics'),
+            'doi'               => __('DOI'),
+            'collaboration'     => __('Collaboration'),
+            'tags'              => $columns['tags'],
+            'date'              => $columns['date'],
         );
 
         return $columns;
@@ -352,6 +427,12 @@ class PublicationPostModification implements PostRegistration
      * CHANGELOG
      *
      * Added 03.12.2019
+     *
+     * Changed 10.12.2019
+     * Replaced the field "scopusID" which contains the scopus ID of the publication with the field "doi", which
+     * contains the doi of the publication.
+     * Added a case for "collaboration", which will echo a link with the name of the collaboration tag, but only if
+     * the collaboration tag is not NONE.
      *
      * @param $column
      * @param $post_id
@@ -373,15 +454,33 @@ class PublicationPostModification implements PostRegistration
             echo implode(', ', $authors);
         }
 
-        if ($column === 'scopusID') {
+        if ($column === 'doi') {
             // Displaying the scopus ID, but it will be a link to the scopus site at the same time
             $template = "<a href='%s'>%s</a>";
-            echo sprintf($template, $publication_post->getURL(), $publication_post->scopus_id);
+            echo sprintf($template, $publication_post->getURL(), $publication_post->doi);
         }
 
         if ($column === 'topics') {
             $topics = $publication_post->getTopics();
             echo implode(', ', $topics);
+        }
+
+        // 10.12.2019
+        // In case the collaboration tag is "NONE", the field is supposed to show no text at all, only when there is
+        // an actual collaboration.
+        // If there is a collaboration, the name of the tag will be printed and the string will actually be a href to
+        // a filter, where only publications with this collaboration type will be shown.
+        if ($column === 'collaboration') {
+            $collaboration = $publication_post->getCollaboration();
+            if ($collaboration !== 'NONE') {
+                $template = "<a href='/wp-admin/edit.php?post_type=%s&collaboration=%s'>%s</a>";
+                echo sprintf(
+                    $template,
+                    $publication_post::$POST_TYPE,
+                    $collaboration,
+                    $collaboration
+                );
+            }
         }
 
     }

@@ -329,6 +329,9 @@
              * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
              * display can be updated easily.
              * Also added log messages.
+             *
+             * Changed 03.12.2019
+             * On defau1lt everything will be blacklisted until it is whitelisted explicitly
              */
             updateAffiliations: function () {
                 let affiliations = this.affiliation_manager.getAffiliations(this.authors);
@@ -343,10 +346,13 @@
                         // Changed 17.10.2019
                         // using the Vue.set() method now to add a new value to the affiliations object, because that
                         // issues Vue to redraw the v-for, which is using the affiliations object!
+                        // Changed 03.12.2019
+                        // If the entry is not specifically whitelisted, it will be blacklisted on default. This
+                        // ensures that even an unedited author has a valid listing in the beginning
                         Vue.set(this.affiliations, id, affiliations[id]);
                         if (affiliations[id].whitelist) {
                             Vue.set(this.listing, id, 'white');
-                        } else if (affiliations[id].blacklist) {
+                        } else {
                             Vue.set(this.listing, id, 'black');
                         }
                     }

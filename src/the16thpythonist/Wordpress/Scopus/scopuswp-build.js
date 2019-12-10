@@ -344,6 +344,15 @@ var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.arra
 //
 //
 //
+//
+//
+//
+//
+//
+
+// Changed 17.10.2019
+// Imported Vue due to the need for calling the Vue.set() and Vue.delete() methods.
+let Vue = require('vue/dist/vue.js');
 
 module.exports = {
     name: 'array-select-input',
@@ -372,20 +381,70 @@ module.exports = {
         }
     },
     methods: {
+        /**
+         * Wrapper method to first force an update of all values and then emit the values array of the internal
+         * associative array representation of all the input values to the "input" event to the parent component.
+         *
+         * CHANGELOG
+         *
+         * Added 24.02.2019
+         *
+         * Changed 17.10.2019
+         * Removed the call to $forceUpdate(), because the v-for display updates with the use of Vue.set() and
+         * Vue.delete() just fine.
+         */
         emitChange: function () {
-            this.$forceUpdate();
+            // this.$forceUpdate();
             this.$emit('input', Object.values(this.associatedData));
         },
+        /**
+         * This is the event handler for the "input" event for all the text inputs, it will simply emit the "input"
+         * event to the parent component containing the current state of the array with all the input texts.
+         *
+         * CHANGELOG
+         *
+         * Added 24.02.2019
+         */
         onInput: function () {
             this.emitChange();
         },
+        /**
+         * This is the "click" event handler for the button at the bottom. When clicking it  a new text intput
+         * will be added to the array.
+         *
+         * CHANGELOG
+         *
+         * Added 24.02.2019
+         *
+         * Changed 17.10.2019
+         * Instead of relying on the $forceUpdate function, now using the Vue.set() function to make the v-for
+         * display update.
+         * Also the input does no longer contain a value at the start, as it is quite annoying to delete that every
+         * time before entering a new one.
+         */
         onAdd: function () {
-            this.associatedData[this.currentIndex] = this.options[0];
+            Vue.set(this.associatedData, this.currentIndex, this.options[0]);
             this.currentIndex += 1;
             this.emitChange();
         },
+        /**
+         * The "click" event handler for the - buttons at the end of each text input. The index of the how many-th
+         * input it is has to be passed, so that this element can be removed from the internal array, which will
+         * then of course update the view as well.
+         *
+         * CHANGELOG
+         *
+         * Added 24.02.2019
+         *
+         * Changed 17.10.2019
+         * Instead relying on the $forceUpdate function, using the Vue.delete() function to update the v-for
+         * display
+         *
+         * @param index
+         */
         onRemove: function (index) {
-            delete this.associatedData[index];
+            //delete this.associatedData[index];
+            Vue.delete(this.associatedData, index);
             this.emitChange();
         }
     }
@@ -409,7 +468,7 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
     hotAPI.reload("data-v-ced2c6c8", __vue__options__)
   }
 })()}
-},{"vue":15,"vue-hot-reload-api":12,"vueify/lib/insert-css":17}],5:[function(require,module,exports){
+},{"vue":15,"vue-hot-reload-api":12,"vue/dist/vue.js":13,"vueify/lib/insert-css":17}],5:[function(require,module,exports){
 var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.array-input[data-v-6733cb66] {\n    display: flex;\n    flex-direction: column;\n}\n\ndiv.array-text-input-element[data-v-6733cb66] {\n    margin-bottom: 10px;\n}")
 ;(function(){
 //
@@ -513,6 +572,10 @@ module.exports = {
          * CHANGELOG
          *
          * Added 24.02.2019
+         *
+         * Changed 17.10.2019
+         * Removed the call to $forceUpdate(), because the v-for display updates with the use of Vue.set() and
+         * Vue.delete() just fine.
          */
         emitChange: function () {
             this.$emit('input', Object.values(this.associatedData));
@@ -871,6 +934,9 @@ module.exports = {
          * Setting the new value with the Vue.set() function tells Vue that it has changed directly so that the
          * display can be updated easily.
          * Also added log messages.
+         *
+         * Changed 03.12.2019
+         * On defau1lt everything will be blacklisted until it is whitelisted explicitly
          */
         updateAffiliations: function () {
             let affiliations = this.affiliation_manager.getAffiliations(this.authors);
@@ -885,10 +951,13 @@ module.exports = {
                     // Changed 17.10.2019
                     // using the Vue.set() method now to add a new value to the affiliations object, because that
                     // issues Vue to redraw the v-for, which is using the affiliations object!
+                    // Changed 03.12.2019
+                    // If the entry is not specifically whitelisted, it will be blacklisted on default. This
+                    // ensures that even an unedited author has a valid listing in the beginning
                     Vue.set(this.affiliations, id, affiliations[id]);
                     if (affiliations[id].whitelist) {
                         Vue.set(this.listing, id, 'white');
-                    } else if (affiliations[id].blacklist) {
+                    } else {
                         Vue.set(this.listing, id, 'black');
                     }
                 }
@@ -1016,6 +1085,14 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
 },{"jquery":11,"vue":15,"vue-hot-reload-api":12,"vue/dist/vue.js":13}],7:[function(require,module,exports){
 var __vueify_style_dispose__ = require("vueify/lib/insert-css").insert("div.scopus-input-container[data-v-6b0c4292] {\n    margin-bottom: 10px;\n}")
 ;(function(){
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -1222,8 +1299,8 @@ module.exports = {
                 'first_name':   this.firstName,
                 'last_name':    this.lastName
             };
-            console.log(data);
-            console.log(this.scopusIDs);
+            //console.log(data);
+            //console.log(this.scopusIDs);
 
             ajax.update(data);
 
@@ -1238,6 +1315,10 @@ module.exports = {
             if (window.location.pathname.includes('post-new.php')) {
                 this.redirectEdit();
             }
+
+            // 03.11.2019
+            // Displaying a message in the activity log, after the info has been saved to increase responsiveness
+            this.logBus.$emit('logActivity', 'Changes have been saved!');
 
         },
         /**
@@ -1292,7 +1373,7 @@ module.exports = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"author-input-component"},[_c('h2',[_vm._v("Author Information")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("First name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.firstName),expression:"firstName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.firstName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.firstName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Last name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.lastName),expression:"lastName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.lastName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.lastName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Scopus ID:")]),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.scopusIDs},on:{"input":_vm.onIDChange}})],1),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Categories")]),_vm._v(" "),_c('v-array-select-input',{attrs:{"array":_vm.categories,"options":_vm.options},on:{"input":_vm.onCategoryChange}})],1),_vm._v(" "),_c('v-author-affiliation-listing',{ref:"affiliations",attrs:{"affiliations":_vm.affiliations,"logBus":_vm.logBus,"authors":_vm.scopusIDs}}),_vm._v(" "),_c('v-activity-log',{attrs:{"messages":[],"logBus":_vm.logBus}}),_vm._v(" "),_c('button',{staticClass:"material-button",on:{"click":function($event){$event.preventDefault();return _vm.onSave($event)}}},[_vm._v("save")])],1)}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"author-input-component"},[_c('h2',[_vm._v("Author Information")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("First name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.firstName),expression:"firstName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.firstName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.firstName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Last name:")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.lastName),expression:"lastName"}],attrs:{"type":"text","size":"sm"},domProps:{"value":(_vm.lastName)},on:{"input":function($event){if($event.target.composing){ return; }_vm.lastName=$event.target.value}}})]),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Scopus ID:")]),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.scopusIDs},on:{"input":_vm.onIDChange}})],1),_vm._v(" "),_c('div',{staticClass:"scopus-input-container"},[_c('label',[_vm._v("Categories")]),_vm._v(" "),_c('v-array-select-input',{attrs:{"array":_vm.categories,"options":_vm.options},on:{"input":_vm.onCategoryChange}})],1),_vm._v(" "),_c('v-author-affiliation-listing',{ref:"affiliations",attrs:{"affiliations":_vm.affiliations,"logBus":_vm.logBus,"authors":_vm.scopusIDs}}),_vm._v(" "),_c('v-activity-log',{attrs:{"messages":[],"logBus":_vm.logBus}}),_vm._v(" "),_c('h2',[_vm._v("Save Changes")]),_vm._v(" "),_c('p',[_vm._v("\n        Use the button below to save all the changes made in this section about the author meta information!\n    ")]),_vm._v(" "),_c('button',{staticClass:"material-button",on:{"click":function($event){$event.preventDefault();return _vm.onSave($event)}}},[_vm._v("save")])],1)}
 __vue__options__.staticRenderFns = [function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_vm._v("\n        Use these following input fields to enter the necessary information about the author. "),_c('br'),_vm._v("\n        (Note that the first and last name will be used as the title of the author post, replacing any custom title\n        entered), "),_c('br'),_vm._v("\n        One author might be associated with multiple scopus author ids. This can be due to a mistake within the\n        scopus database. For such a case multiple ids can be added to the author. All of them will be considered\n        when fetching affiliation info and while requesting new publications from the scopus database. "),_c('br'),_vm._v("\n        One author usually works in a specific scientific field or a work group. For this case a category can be\n        chosen. It is assumed, that if the author has these \"specialties\", every publication he has co-authored\n        will be (at least partially) connected to that topic. Thus every publication fetched, which contains this\n        author will be classified with his categories.\n    ")])}]
 __vue__options__._scopeId = "data-v-6b0c4292"
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
@@ -1492,7 +1573,7 @@ module.exports = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"scopus-options-component"},[_c('div',{attrs:{"id":"scopus-options-user"}},[_c('h3',[_vm._v("Scopus User")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.currentUser.ID),expression:"currentUser.ID"}],staticClass:"mb-3",attrs:{"size":"sm"},on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.$set(_vm.currentUser, "ID", $event.target.multiple ? $$selectedVal : $$selectedVal[0])}}},[_vm._l((_vm.users),function(user){return [(user.ID === _vm.currentUser)?_c('option',{attrs:{"selected":""},domProps:{"value":user.ID}},[_vm._v(_vm._s(user.name))]):_c('option',{domProps:{"value":user.ID}},[_vm._v(_vm._s(user.name))])]})],2)]),_vm._v(" "),_c('div',{attrs:{"id":"scopus-options-categories"}},[_c('h3',[_vm._v("Publication Categories")]),_vm._v(" "),_vm._m(1),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.categories},on:{"input":_vm.onCategoriesChange}})],1),_vm._v(" "),_c('button',{on:{"click":_vm.save}},[_vm._v("save changes")])])}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"scopus-options-component"},[_c('div',{attrs:{"id":"scopus-options-user"}},[_c('h3',[_vm._v("Scopus User")]),_vm._v(" "),_vm._m(0),_vm._v(" "),_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.currentUser.ID),expression:"currentUser.ID"}],staticClass:"mb-3",attrs:{"size":"sm"},on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.$set(_vm.currentUser, "ID", $event.target.multiple ? $$selectedVal : $$selectedVal[0])}}},[_vm._l((_vm.users),function(user){return [(user.ID === _vm.currentUser)?_c('option',{attrs:{"selected":""},domProps:{"value":user.ID}},[_vm._v(_vm._s(user.name))]):_c('option',{domProps:{"value":user.ID}},[_vm._v(_vm._s(user.name))])]})],2)]),_vm._v(" "),_c('div',{attrs:{"id":"scopus-options-categories"}},[_c('h3',[_vm._v("Publication Categories")]),_vm._v(" "),_vm._m(1),_vm._v(" "),_c('v-array-text-input',{attrs:{"array":_vm.categories},on:{"input":_vm.onCategoriesChange}})],1),_vm._v(" "),_c('button',{staticClass:"material-button",on:{"click":_vm.save}},[_vm._v("save changes")])])}
 __vue__options__.staticRenderFns = [function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_vm._v("\n                Please select the user, which you want to be the author of the publication posts."),_c('br'),_vm._v("\n                Note that this user is "),_c('em',[_vm._v("not being used as the publication author")]),_vm._v("! It is only used as the\n                author for the post, that "),_c('em',[_vm._v("represents")]),_vm._v(" the publication and does not necessarily have to be\n                displayed on the actual post page!\n-           ")])},function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_vm._v("\n                The scopus publications are structured using categories. Publications get assigned categories based on\n                which author has worked on them. Different authors can be associated with different categories. Think\n                of it this way: Author1's speciality is nanotechnology, so every paper he works on will have some\n                aspect of nanotechnology in it. Author2 mainly works with exotic plants. If the two authors work on\n                a publication together, it will be assigned the categories 'microbes' and 'exotic plants'."),_c('br'),_vm._v("\n                Use the following section to define all possible categories for your authors. When creating a new\n                author profile you will be able to add categories to that author by choosing from all the categories\n                defined here!.\n            ")])}]
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
