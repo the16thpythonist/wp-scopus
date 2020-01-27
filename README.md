@@ -270,3 +270,10 @@ be added to the cache entry, which will prevent it from being fetched by scopus 
     - The scopus author ID for that author will now be displayed
     - The topics, which this author publishes for are now also being displayed.
  
+ 
+### 0.0.6 - 27.01.2020
+
+- Whenever a publication is modified now, the new collaboration value will be saved into the 
+publication meta cache as well. This has been done for the case, that a collaboration value is changed at 
+some point, if the post is deleted then and fetched again, the saved collaboration value will not be lost.
+- The publication fetch process now also checks the meta cache for a possible value for "collaboration" first.

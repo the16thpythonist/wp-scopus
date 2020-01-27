@@ -261,6 +261,10 @@ class PublicationPostModification implements PostRegistration
         }
     }
 
+    // ****************************
+    // SAVING AND DELETING AN ENTRY
+    // ****************************
+
     /**
      *
      * THIS FUNCTION IS COMPLETE BULLSHIT.
@@ -270,13 +274,16 @@ class PublicationPostModification implements PostRegistration
      *
      * Added 20.10.2018
      *
-     * @param $post_id
+     * Changed 27.01.2020
+     * Added a call to the method "updateCacheOnSave" at the end of the method. This will save all necessary changes
+     * to the JSON cache, whenever a publication post is being saved
+     *
+     * @param int $post_id
      * @param \WP_Post $post
      * @return mixed
      */
     public function savePost($post_id, $post) {
 
-        //wp_die();
         if (PostUtil::isSavingPostType($this->post_type, $post_id)) {
 
             $modified_key = '__post_data_modified';
@@ -300,9 +307,76 @@ class PublicationPostModification implements PostRegistration
                 );
                 wp_update_post($args);
             }
+
+            // This method will make all necessary updates to the publication cache (JSON file) whenever a publication
+            // post is saved
+            $this->updateCacheOnSave($post_id);
         }
 
         return $post_id;
+    }
+
+    /**
+     * Given the post id for a publication post, this function will save all necessary data of that post to the
+     * publication meta cache.
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * @param int $post_id
+     */
+    public function updateCacheOnSave($post_id) {
+        // First we check if this is really only affecting posts of this desired post type
+        if (get_post_type($post_id) !== $this->post_type) {
+            return;
+        }
+
+        // Of course the post ID itself is not very useful to us on its own, but we can use it to create
+        // a "PublicationPost" object, which will load ALL the information of the post.
+        $publication_post = new PublicationPost($post_id);
+        // To update the cache, we need to load the cache first of course
+        $publication_cache = new PublicationMetaCache();
+
+        // If there is no entry for the publication yet, we will create one. (In this method this is a very
+        // unlikely case, but we still need to check for it nonetheless)
+        if (!$publication_cache->contains($publication_post->scopus_id)) {
+            $publication_cache->write(
+                $publication_post->scopus_id,
+                $publication_post->title,
+                $publication_post->published
+            );
+        }
+
+        // Now we are executing all the methods with the actual cache modifications
+
+        // This will save the (new) collaboration tag for the publication in the cache
+        $this->updateCacheCollaboration($publication_post, $publication_cache);
+
+        // In the end we need to save the cache, so that all the changes are being written into the
+        // actual persistent JSON file
+        $publication_cache->save();
+    }
+
+    /**
+     * Given a PublicationPost and a PublicationMetaCache object, this method will save the collaboration of the post
+     * to the meta cache.
+     * ! The cache will not be saved
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * @param PublicationPost $publication_post
+     * @param PublicationMetaCache $publication_cache
+     */
+    public function updateCacheCollaboration($publication_post, $publication_cache) {
+
+        $publication_cache->writeMeta(
+            $publication_post->scopus_id,
+            'collaboration',
+            $publication_post->getCollaboration()
+        );
     }
 
     /**
@@ -356,6 +430,10 @@ class PublicationPostModification implements PostRegistration
 
         $publication_cache->save();
     }
+
+    // ***********************
+    // MODIFYING ADMIN COLUMNS
+    // ***********************
 
     /*
      * MODIFYING THE ADMIN COLUMNS

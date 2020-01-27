@@ -187,6 +187,10 @@ class PublicationFetcher
      * which is essentially the concatenation of the categories array. This string will be used to sort
      * the admin list view of the publication posts by the used topics.
      *
+     * Changed 27.01.2020
+     * The collaboration value is now being determined by the new private function "getCollaboration", which will also
+     * check the publication cache for a saved value first...
+     *
      * @since 0.0.0.2
      *
      * @return \Generator
@@ -273,14 +277,12 @@ class PublicationFetcher
                 continue;
             }
 
-            // $post_status = ($publication_check > 0 ? 'publish' : 'draft');
+            // Will return an array containing the authors
             $authors = $this->getAuthors();
-            $author_count = count($this->abstract->getAuthors());
-            if ($author_count > $this->args['collaboration_limit']) {
-                $collaboration = 'ANY';
-            } else {
-                $collaboration = 'NONE';
-            }
+
+            // 27.01.2020
+            // Returns the string to be used as the collaboration value of the publication
+            $collaboration = $this->getCollaboration();
 
             // 06.11.2018
             // Added a 'status' option to the argument array, which can be 'publish' or 'draft'. If there is a
@@ -429,6 +431,55 @@ class PublicationFetcher
     }
 
     /**
+     * This function will return the value, which will be used for the collaboration field of the publication during
+     * the insert operation
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * @return string
+     */
+    private function getCollaboration() {
+        // First thing we check, if there is a collaboration value already saved in the publication meta cache
+        // if it does exists, we'll obviously be using that one
+        $collaboration_exists = $this->publication_cache->keyExists($this->scopus_id, 'collaboration');
+        if ($collaboration_exists) {
+            return $this->publication_cache->readMeta($this->scopus_id, 'collaboration');  // type: string
+        }
+
+        // In case there is no value for it yet, we will use a specific strategy to determine if the publication
+        // in question is a collaboration paper (ANY) or not (NONE)
+        return $this->guessCollaboration();
+    }
+
+    /**
+     * This method will guess whether the current publication is likely to be a collaboration paper (in which case the
+     * collaboration value will be ANY symbolizing an unknown collaboration), or not (in which case the value will be
+     * NONE)
+     * This method makes the decision based on the amount of authors, which the publication has. If this count exceeds
+     * the limit (which was given as a parameter to the fetcher object), it will be declared a collaboration.
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * @return string
+     */
+    private function guessCollaboration() {
+        $author_count = count($this->abstract->getAuthors());
+        if ($author_count > $this->args['collaboration_limit']) {
+            return "ANY";
+        } else {
+            return "NONE";
+        }
+    }
+
+    // ****************************
+    // META CACHE RELATED FUNCTIONS
+    // ****************************
+
+    /**
      * Given a scopus id, this function will check if the publication has been flagged with the boolean "exclude" flag
      * within the publication meta cache. If it has been flagged TRUE will be returned, otherwise false.
      * The exclude flag indicates, whether the publication has already been deleted once, and thus should not be
@@ -477,5 +528,4 @@ class PublicationFetcher
 
         return false;
     }
-
 }
