@@ -30,21 +30,31 @@ class PublicationPostModification implements PostRegistration
 
     const LABEL = 'Publication';
     const ICON = 'dashicons-format-aside';
+
+    // This is an array, whose keys are the string names of the custom taxonomies to be registered for this post type
+    // and the values are the arrays which will be used as the "args" for the corresponding register_taxonomy call
+    // Changed 28.01.2020
+    // Added the "show_in_rest" option to be true in all arg arrays. This is necessary for the taxonomies to be
+    // editable in the new gutenberg editor
     const TAXONOMIES = array(
         'journal'       => array(
             'label'         => 'Journal',
             'public'        => true,
+            'show_in_rest'  => true,
         ),
         'collaboration' => array(
             'label'         => 'Collaboration',
+            'show_in_rest'  => true,
             'public'        => true,
         ),
         'author'        => array(
             'label'         => 'Author',
+            'show_in_rest'  => true,
             'public'        => true,
         ),
         'selection'     => array(
             'label'         => 'Selection',
+            'show_in_rest'  => true,
             'public'        => true,
         )
     );
@@ -96,6 +106,11 @@ class PublicationPostModification implements PostRegistration
      * view of the posts within this method, I moved them to the separate method "registerAdminListViewModification"
      * and this method is being called here.
      *
+     * Changed 28.01.2020
+     * This filter will add a new flag to the publications meta cache entry, which will prevent the publication to
+     * be fetched again after it has been trashed once.
+     * Added a filter, which will disable the gutenberg editor for this post type.
+     *
      * @return void
      */
     public function register()
@@ -107,7 +122,15 @@ class PublicationPostModification implements PostRegistration
 
         add_action('init', array($this, 'registerTaxonomies'));
 
-        add_filter('save_post', array($this, 'savePost'), 20, 2);
+        // 28.01.2020
+        // Disable the gutenberg editor for the publication posts, because the gutenberg editor does not work well
+        // with the caching of the collaboration values
+        add_filter('use_block_editor_for_post', '__return_false', 10);
+
+        // 28.01.2020
+        // Changed the filter hook from "save_post" to "save_post_post", as this is more specific and will really only
+        // get called for posts of the "post" post type.
+        add_filter('save_post_post', array($this, 'savePost'), 999, 2);
         // 28.11.2019
         // This filter will add a new flag to the publications meta cache entry, which will prevent the publication to
         // be fetched again after it has been trashed once.
@@ -367,16 +390,28 @@ class PublicationPostModification implements PostRegistration
      *
      * Added 27.01.2020
      *
+     * Changed 28.01.2020
+     * Added a "try" block around the code, because the website would error while updating the post, when there was no
+     * collaboration tag existent. If that is the case NONE will be saved as the collaboration into the cache.
+     *
      * @param PublicationPost $publication_post
      * @param PublicationMetaCache $publication_cache
      */
     public function updateCacheCollaboration($publication_post, $publication_cache) {
 
-        $publication_cache->writeMeta(
-            $publication_post->scopus_id,
-            'collaboration',
-            $publication_post->getCollaboration()
-        );
+        try {
+            $publication_cache->writeMeta(
+                $publication_post->scopus_id,
+                'collaboration',
+                $publication_post->getCollaboration()
+            );
+        } catch (\Exception $e) {
+            $publication_cache->writeMeta(
+                $publication_post->scopus_id,
+                'collaboration',
+                'NONE'
+            );
+        }
     }
 
     /**
