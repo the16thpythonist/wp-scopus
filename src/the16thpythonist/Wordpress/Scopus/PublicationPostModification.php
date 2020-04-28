@@ -12,6 +12,9 @@ use the16thpythonist\KITOpen\Publication;
 use the16thpythonist\Wordpress\Base\PostRegistration;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
+// 28.04.2020 After namespace change
+use the16thpythonist\Wordpress\Scopus\Author\AuthorObservatory;
+
 /**
  * Class PublicationPostModification
  *

@@ -13,6 +13,9 @@ use Closure;
 use Scopus\Response\Abstracts;
 use Scopus\Response\AbstractCoredata;
 
+// 28.04.2020 After namespace change
+use the16thpythonist\Wordpress\Scopus\Author\AuthorObservatory;
+
 /**
  * Class PublicationFetcher
  *
@@ -279,6 +282,7 @@ class PublicationFetcher
 
             // Will return an array containing the authors
             $authors = $this->getAuthors();
+            $author_count = count($authors);
 
             // 27.01.2020
             // Returns the string to be used as the collaboration value of the publication

@@ -49,7 +49,10 @@
   },
   "autoload": {
     "psr-4": {
-      "the16thpythonist\\Wordpress\\Scopus\\": "src/the16thpythonist/Wordpress/Scopus"
+      "the16thpythonist\\Wordpress\\Scopus\\": "src/the16thpythonist/Wordpress/Scopus",
+      "the16thpythonist\\Wordpress\\Scopus\\Commands\\": "src/the16thpythonist/Wordpress/Scopus/Commands",
+      "the16thpythonist\\Wordpress\\Scopus\\Author\\": "src/the16thpythonist/Wordpress/Scopus/Author",
+      "the16thpythonist\\Wordpress\\Scopus\\Publication\\": "src/the16thpythonist/Wordpress/Scopus/Publication"
     }
   }
 }

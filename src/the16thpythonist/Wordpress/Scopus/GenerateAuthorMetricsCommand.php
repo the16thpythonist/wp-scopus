@@ -12,6 +12,10 @@ use the16thpythonist\Command\Command;
 use the16thpythonist\Wordpress\Data\Type\JSONFilePost;
 use the16thpythonist\Wordpress\Data\DataPost;
 
+// 28.04.2020 After namespace change
+use the16thpythonist\Wordpress\Scopus\Author\AuthorMetricsGenerator;
+use the16thpythonist\Wordpress\Scopus\Author\AuthorMetricsConverter;
+
 
 class GenerateAuthorMetricsCommand extends Command
 {

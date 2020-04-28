@@ -10,6 +10,9 @@ namespace the16thpythonist\Wordpress\Scopus;
 
 use the16thpythonist\Command\Command;
 
+// 28.04.2020 After namespace change
+use the16thpythonist\Wordpress\Scopus\Author\AuthorObservatory;
+
 /**
  * Class UpdatePublicationsCommand
  *

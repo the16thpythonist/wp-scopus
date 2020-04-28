@@ -12,6 +12,10 @@ use Log\LogPost;
 use the16thpythonist\Wordpress\Data\DataPost;
 use the16thpythonist\Wordpress\WpCommands;
 
+// 28.04.2020 After namespace change
+use the16thpythonist\Wordpress\Scopus\Author\AuthorPost;
+use the16thpythonist\Wordpress\Scopus\Author\AuthorMetricsShortcode;
+
 /**
  * Class WpScopusRegistration
  *
