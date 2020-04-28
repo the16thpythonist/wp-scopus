@@ -16,6 +16,11 @@ use the16thpythonist\Wordpress\WpCommands;
 use the16thpythonist\Wordpress\Scopus\Author\AuthorPost;
 use the16thpythonist\Wordpress\Scopus\Author\AuthorMetricsShortcode;
 
+use the16thpythonist\Wordpress\Scopus\Commands\GenerateAuthorMetricsCommand;
+use the16thpythonist\Wordpress\Scopus\Commands\FetchPublicationsCommand;
+use the16thpythonist\Wordpress\Scopus\Commands\UpdateKITOpenCommand;
+use the16thpythonist\Wordpress\Scopus\Commands\UpdatePublicationsCommand;
+
 /**
  * Class WpScopusRegistration
  *

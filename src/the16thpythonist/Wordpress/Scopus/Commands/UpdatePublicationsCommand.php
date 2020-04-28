@@ -6,7 +6,7 @@
  * Time: 16:42
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Commands;
 
 use the16thpythonist\Command\Command;
 

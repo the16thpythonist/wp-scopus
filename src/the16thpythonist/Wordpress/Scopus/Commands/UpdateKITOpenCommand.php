@@ -6,7 +6,7 @@
  * Time: 07:18
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Commands;
 
 // The Command base class
 use function foo\func;
