@@ -16,7 +16,7 @@ use Log\VoidLog;
 
 // 28.04.2020 After the namespace change
 use the16thpythonist\Wordpress\Scopus\WpScopus;
-
+use the16thpythonist\Wordpress\Scopus\Publication\PublicationPost;
 
 /**
  * Class AuthorObservatory
