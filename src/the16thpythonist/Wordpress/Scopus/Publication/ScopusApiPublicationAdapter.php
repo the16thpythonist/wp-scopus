@@ -4,6 +4,7 @@
 namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 use Closure;
+use Scopus\Response\AbstractAuthor;
 use Scopus\Response\AbstractCoredata;
 use Scopus\Response\Abstracts;
 
@@ -120,6 +121,7 @@ class ScopusApiPublicationAdapter
      * @return array
      */
     public function getArgs(): array {
+        // TODO: Also add the author affiliations
         return [
             'title'                     => $this->coredata->getTitle(),
             // 'status'                    => '',
@@ -200,6 +202,29 @@ class ScopusApiPublicationAdapter
         return (array_key_exists('eid', $data) ? $data['eid'] : '');
     }
 
+    /**
+     * Returns an assoc array with the keys being the author ids and the values being the affiliation ids for those.
+     *
+     * CHANGELOG
+     *
+     * Added 28.04.2020
+     *
+     * @return array
+     */
+    protected function getAuthorAffiliations(): array {
+        $affiliation_ids = [];
+        $authors = $this->abstract->getAuthors();
+
+        foreach ($authors as $author) {
+            $_author_id = $author->getId();
+            $_data = $this->getProtectedFromAuthor($author);
+            if (array_key_exists('affiliation', $_data) && array_key_exists('@id', $_data['affiliation'])) {
+                $affiliation_ids[$_author_id] = $_data['affiliation']['@id'];
+            }
+        }
+        return $affiliation_ids;
+    }
+
     // NECESSARY UGLY HACKS
     // ********************
 
@@ -222,5 +247,20 @@ class ScopusApiPublicationAdapter
     protected function getProtectedFromCoredata(): array {
         $closure = function () {return $this->data;};
         return Closure::bind($closure, $this->coredata, AbstractCoredata::class)();
+    }
+
+    /**
+     * Returns the value of the protected field "data" of the given AbstractAuthor object
+     *
+     * CHANGELOG
+     *
+     * Added 28.04.2020
+     *
+     * @param AbstractAuthor $author
+     * @return array
+     */
+    protected function getProtectedFromAuthor(AbstractAuthor $author): array {
+        $closure = function () {return $this->data;};
+        return Closure::bind($closure, $author, AbstractAuthor::class)();
     }
 }
