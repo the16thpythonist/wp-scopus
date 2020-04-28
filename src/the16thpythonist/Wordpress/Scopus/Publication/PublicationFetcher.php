@@ -15,6 +15,7 @@ use Scopus\Response\AbstractCoredata;
 
 // 28.04.2020 After namespace change
 use the16thpythonist\Wordpress\Scopus\Author\AuthorObservatory;
+use the16thpythonist\Wordpress\Scopus\WpScopus;
 
 /**
  * Class PublicationFetcher
