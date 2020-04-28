@@ -12,6 +12,10 @@ use the16thpythonist\KITOpen\KITOpenApi;
 use the16thpythonist\Wordpress\Base\PostPost;
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
+// 28.04.2020 After the namespace update
+
+use the16thpythonist\Wordpress\Scopus\ScopusOptions;
+
 /**
  * Class PublicationPost
  *

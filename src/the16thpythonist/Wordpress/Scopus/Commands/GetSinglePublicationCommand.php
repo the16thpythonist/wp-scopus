@@ -11,17 +11,14 @@ use the16thpythonist\Command\Types\StringType;
  *
  * CHANGELOG
  *
- * Added 26.11.2018
- *
- * Changed 05.12.2018
- * Renamed the parameter 'older_than' to 'more_recent_than'
+ * Added 28.04.2020
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
 class GetSinglePublicationCommand extends Command
 {
     public $params = [
-        'scopus id'         => [
+        'scopus_id'         => [
             'optional'      => false,
             'type'          => StringType::class,
             'default'       => ''
@@ -31,5 +28,7 @@ class GetSinglePublicationCommand extends Command
     public function run(array $args)
     {
         // TODO: Implement run() method.
+        // Theoretically I should be making a new class "ScopusPublicationAdapter" or something like this, which will
+        // get a Scopus publication and convert it into a Post compatible format.
     }
 }
