@@ -6,7 +6,7 @@
  * Time: 10:11
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 
 /**

@@ -17,6 +17,7 @@ use the16thpythonist\Wordpress\Functions\PostUtil;
 
 // 28.04.2020 After namespace change
 use the16thpythonist\Wordpress\Scopus\Author\AuthorPost;
+use the16thpythonist\Wordpress\Scopus\Publication\PublicationPost;
 
 /**
  * Class UpdateKITOpenCommand

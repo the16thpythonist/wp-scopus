@@ -6,7 +6,7 @@
  * Time: 12:41
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 use Scopus\ScopusApi;
 use Closure;

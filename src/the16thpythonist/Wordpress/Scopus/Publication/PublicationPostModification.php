@@ -6,7 +6,7 @@
  * Time: 16:07
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 use the16thpythonist\KITOpen\Publication;
 use the16thpythonist\Wordpress\Base\PostRegistration;

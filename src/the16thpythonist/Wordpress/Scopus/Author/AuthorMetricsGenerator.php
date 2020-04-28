@@ -12,6 +12,9 @@ use the16thpythonist\Wordpress\Data\DataPost;
 use the16thpythonist\Wordpress\Data\Type\JSONFilePost;
 use Log\VoidLog;
 
+// 28.04.2020 After the namespace change
+use the16thpythonist\Wordpress\Scopus\Publication\PublicationPost;
+
 /**
  * Class AuthorMetricsGenerator
  *

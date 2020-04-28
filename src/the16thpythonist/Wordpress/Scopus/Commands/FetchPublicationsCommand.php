@@ -10,6 +10,9 @@ namespace the16thpythonist\Wordpress\Scopus\Commands;
 
 use the16thpythonist\Command\Command;
 
+// 28.04.2020 After the namespace change
+use the16thpythonist\Wordpress\Scopus\Publication\PublicationFetcher;
+
 /**
  * Class FetchPublicationsCommand
  *

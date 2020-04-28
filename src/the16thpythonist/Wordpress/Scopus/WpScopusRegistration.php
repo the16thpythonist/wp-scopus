@@ -21,6 +21,9 @@ use the16thpythonist\Wordpress\Scopus\Commands\FetchPublicationsCommand;
 use the16thpythonist\Wordpress\Scopus\Commands\UpdateKITOpenCommand;
 use the16thpythonist\Wordpress\Scopus\Commands\UpdatePublicationsCommand;
 
+use the16thpythonist\Wordpress\Scopus\Publication\PublicationPost;
+use the16thpythonist\Wordpress\Scopus\Publication\RecentPublicationsShortcode;
+
 /**
  * Class WpScopusRegistration
  *

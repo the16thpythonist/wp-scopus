@@ -6,7 +6,7 @@
  * Time: 15:44
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 use the16thpythonist\Wordpress\Data\DataPost;
 use the16thpythonist\Wordpress\Data\Type\JSONFilePost;

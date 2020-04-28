@@ -6,7 +6,7 @@
  * Time: 16:07
  */
 
-namespace the16thpythonist\Wordpress\Scopus;
+namespace the16thpythonist\Wordpress\Scopus\Publication;
 
 
 class PublicationPostRegistration
