@@ -10,6 +10,7 @@ namespace the16thpythonist\Wordpress\Scopus;
 
 use Log\LogPost;
 use the16thpythonist\Wordpress\Data\DataPost;
+use the16thpythonist\Wordpress\Scopus\Commands\GetSinglePublicationCommand;
 use the16thpythonist\Wordpress\WpCommands;
 
 // 28.04.2020 After namespace change
@@ -93,12 +94,17 @@ class WpScopusRegistration
      * CHANGELOG
      *
      * Added 23.10.2018
+     *
+     * Changed 29.04.2020
+     * Registered the GetSinglePublicationCommand class.
      */
     public function registerCommands() {
         GenerateAuthorMetricsCommand::register('generate-author-metrics');
         FetchPublicationsCommand::register('fetch-scopus-publications');
         UpdatePublicationsCommand::register('update-scopus-publications');
         UpdateKITOpenCommand::register('update-kitopen');
+
+        GetSinglePublicationCommand::register('fetch-single-publication');
     }
 
     /**
