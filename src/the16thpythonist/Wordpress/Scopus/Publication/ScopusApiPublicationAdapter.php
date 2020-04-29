@@ -69,17 +69,18 @@ class ScopusApiPublicationAdapter
      * Returns an assoc array containing the most important data about the publication.
      *
      * The returned array will have the following keys:
-     * - title:         (string) title of the paper
-     * - abstract:      (string) a short summary of the paper
-     * - published:     (string) date, at which the paper was published
-     * - scopus_id:     (string) The ID of the paper which scopus uses internally to identify it
-     * - doi:           (string) Digital Object Identifier of the paper
-     * - eid:           (string)
-     * - issn:          (string)
-     * - journal:       (string) The name of the journal in which the paper was published
-     * - volume:        (string) The volume of that journal
-     * - tags:          (array) A list of tags for the paper
-     * - authors:       (array) an assoc array, whose keys are the authors names and the values the author ids
+     * - title:                 (string) title of the paper
+     * - abstract:              (string) a short summary of the paper
+     * - published:             (string) date, at which the paper was published
+     * - scopus_id:             (string) The ID of the paper which scopus uses internally to identify it
+     * - doi:                   (string) Digital Object Identifier of the paper
+     * - eid:                   (string)
+     * - issn:                  (string)
+     * - journal:               (string) The name of the journal in which the paper was published
+     * - volume:                (string) The volume of that journal
+     * - tags:                  (array) A list of tags for the paper
+     * - authors:               (array) an assoc array, whose keys are the authors names and the values the author ids
+     * - author_affiliations:   (array) an assoc array. Keys are author ids and values are affiliation ids.
      *
      * BACKGROUND
      *
@@ -118,10 +119,12 @@ class ScopusApiPublicationAdapter
      *
      * Added 28.04.2020
      *
+     * Changed 29.04.2020
+     * Added the field "author_affiliations" to the final args array
+     *
      * @return array
      */
     public function getArgs(): array {
-        // TODO: Also add the author affiliations
         return [
             'title'                     => $this->coredata->getTitle(),
             // 'status'                    => '',
@@ -136,7 +139,7 @@ class ScopusApiPublicationAdapter
             'tags'                      => $this->getTags(),
             'authors'                   => $this->getAuthors(),
             // 'author_count'              => '',
-            // 'author_affiliations'       => '',
+            'author_affiliations'       => $this->getAuthorAffiliations(),
             // 'categories'                => '',
             // 'collaboration'             => '',
             // 'topics'                    => ''
