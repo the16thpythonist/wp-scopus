@@ -175,10 +175,13 @@ class ScopusApiPublicationAdapter
      *
      * Added 28.04.2020
      *
+     * Changed 29.04.2020
+     * Had to use the protected data field form the Abstracts object directly and not from Coredata.
+     *
      * @return array
      */
     protected function getTags(): array {
-        $data = $this->getProtectedFromCoredata();
+        $data = $this->getProtectedData();
         if (array_key_exists('idxterms', $data)) {
             $mainterm = $data['idxterms']['mainterm'];
             $tags = [];
@@ -230,6 +233,11 @@ class ScopusApiPublicationAdapter
 
     // NECESSARY UGLY HACKS
     // ********************
+
+    protected function getProtectedData(): array {
+        $closure = function () {return $this->data;};
+        return Closure::bind($closure, $this->abstract, Abstracts::class)();
+    }
 
     /**
      * Returns the value of the protected field "data" of "$this->coredata".

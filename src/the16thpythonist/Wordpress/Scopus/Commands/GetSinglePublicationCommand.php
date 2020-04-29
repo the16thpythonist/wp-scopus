@@ -18,6 +18,9 @@ use Scopus\ScopusApi;
 /**
  * Class FetchPublicationsCommand
  *
+ * This class represents a background command, that can be executed on the server to fetch a single scopus publication
+ * record and insert it as a PublicationPost.
+ *
  * CHANGELOG
  *
  * Added 28.04.2020
@@ -44,26 +47,42 @@ class GetSinglePublicationCommand extends Command
         ]
     ];
 
+    /**
+     * CHANGELOG
+     *
+     * Added 29.04.2020
+     *
+     * @param array $args
+     * @return mixed|void
+     * @throws \Exception
+     */
     public function run(array $args)
     {
-        // TODO: Implement run() method.
-        // Theoretically I should be making a new class "ScopusPublicationAdapter" or something like this, which will
-        // get a Scopus publication and convert it into a Post compatible format.
-
         $api = $this->getApi();
         $abstract = $api->retrieveAbstract($args['scopus_id']);
+        $this->log->info("Retrieved the publication from scopus");
 
         $adapter = new ScopusApiPublicationAdapter($abstract);
         $args = $adapter->getArgs();
+        $this->log->debug("Created partial args array through adapter");
 
         $observatory = new AuthorObservatory();
         $cache = new PublicationMetaCache();
+        $this->log->debug("Created AuthorObservatory and PublicationMetaCache objects");
         $builder = new PublicationInsertArgsBuilder($args, $observatory, $cache, $args);
         $args = $builder->getArgs();
 
-        PublicationPost::insert($args);
+        $post_id = PublicationPost::insert($args);
+        $this->log->info(sprintf("Inserted new post with ID: %s", $post_id));
     }
 
+    /**
+     * CHANGELOG
+     *
+     * Added 29.04.2020
+     *
+     * @return ScopusApi
+     */
     protected function getApi() {
         $api_key = WpScopus::$API_KEY;
         return new ScopusApi($api_key);

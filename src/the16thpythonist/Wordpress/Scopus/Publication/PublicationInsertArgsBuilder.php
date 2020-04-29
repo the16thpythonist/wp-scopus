@@ -223,10 +223,13 @@ class PublicationInsertArgsBuilder
      *
      * Added 29.04.2020
      *
+     * Changed 29.04.2020
+     * There was a type "author" as key instead of "authors"
+     *
      * @return int
      */
     protected function getAuthorCount(): int {
-        return count($this->args['author']);
+        return count($this->args['authors']);
     }
 
     /**
@@ -389,7 +392,8 @@ class PublicationInsertArgsBuilder
      * @return array
      */
     protected function getPublicationAuthorIDs(): array {
-        return array_values($this->args['authors']);
+        $ids = array_map('intval', $this->args['authors']);
+        return array_values($ids);
     }
 
     /**
@@ -399,11 +403,14 @@ class PublicationInsertArgsBuilder
      *
      * Added 29.04.2020
      *
+     * Changed 29.04.2020
+     * Using in_array instead of array_key_exists and using the integer rep. of the id now.
+     *
      * @param string $id
      * @return bool
      */
     protected function isAuthorObserved(string $id): bool {
-        return array_key_exists($id, $this->author_ids);
+        return in_array(intval($id), $this->author_ids);
     }
 
 }
