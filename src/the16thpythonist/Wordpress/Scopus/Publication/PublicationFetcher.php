@@ -31,8 +31,11 @@ use the16thpythonist\Wordpress\Scopus\ScopusOptions;
  */
 class PublicationFetcher
 {
-
-    public $args;
+    // This array will contain the configuration key value pairs.
+    // Changed 30.04.2020
+    // Renamed it from "args" to "config". There will also be a new args attribute, but that will represent the
+    // insert args array for the publication post of the current iteration.
+    public $config;
 
     // The amount of publications, that have to be fetched
     public $fetch_count;
@@ -76,6 +79,10 @@ class PublicationFetcher
 
     public $log;
 
+    // Added 30.04.2020
+    // This array will contain the current insert args array during an iteration.
+    public $args;
+
     /**
      * This is the array, which contains the default arguments passed to the constructor of a new object in case there
      * are none specified.
@@ -87,8 +94,12 @@ class PublicationFetcher
      * Changed 31.12.2018
      * Added the 'count' argument. It specifies how many publications are supposed to be fetched. It is an integer
      * value. In case it is a negative value that means that ALL publications possible are supposed to be fetched.
+     *
+     * Changed 30.04.2020
+     * Changed the name to DEFAULT_CONFIG, because the "args" attribute of the class is now the insert args array for
+     * the PublicationPost.
      */
-    const DEFAULT_ARGS = array(
+    const DEFAULT_CONFIG = array(
         'date_limit'            => '2016-01-01',
         'collaboration_limit'   => 50,
         'author_limit'          => 10,
@@ -113,8 +124,9 @@ class PublicationFetcher
      */
     public function __construct(array $args, $log)
     {
-        $this->args = array_replace(self::DEFAULT_ARGS, $args);
+        $this->config = array_replace(self::DEFAULT_CONFIG, $args);
         $this->log = $log;
+        $this->args = [];
 
         // Creating a new author observatory object
         $this->author_observatory = new AuthorObservatory();
@@ -196,6 +208,11 @@ class PublicationFetcher
      * The collaboration value is now being determined by the new private function "getCollaboration", which will also
      * check the publication cache for a saved value first...
      *
+     * Changed 30.04.2020
+     * Moved the whole responsibility of extracting the insertion args array from the api response object to the
+     * classes PublicationInsertArgsBuilder and ScopusApiPublicationAdapter.
+     * Also moved some code to be wrapped by the methods "isPublicationOld" and "isPublicationBlacklisted".
+     *
      * @since 0.0.0.2
      *
      * @return \Generator
@@ -208,7 +225,7 @@ class PublicationFetcher
             // 31.12.2018
             // In case the given count value is negative (usually -1) all publications will be inserted. Otherwise if
             // the current count exceeds the count value the loop will terminate
-            if ( !($this->args['count'] < 0) && $this->args['count'] == $this->current_count ) {
+            if ( !($this->config['count'] < 0) && $this->config['count'] == $this->current_count ) {
                 $this->log->info(sprintf('Loop terminated after fetching "%s" pubs.', $this->current_count));
                 break;
             }
@@ -221,18 +238,8 @@ class PublicationFetcher
             // 31.10.2018
             // Getting the title of the publication from the cache now, because before it would just use the title
             // of the last published publication for all log entries after that
-            if ($this->publication_cache->contains($scopus_id)) {
-                // First we check if the publication is too old
-                if ($this->checkCacheTooOld($scopus_id)) {
-                    continue;
-                }
-
-                // 28.11.2019
-                // Now we also need to check for the "exclude" boolean flag within the meta cache. If it is true the
-                // publication should also not be loaded...
-                if ($this->checkCacheExclude($scopus_id)) {
-                    continue;
-                }
+            if ($this->isCacheDismissed($scopus_id)) {
+                continue;
             }
 
             try {
@@ -242,8 +249,16 @@ class PublicationFetcher
                 continue;
             }
 
-            $coredata = $this->abstract->getCoredata();
-            $this->title = $coredata->getTitle();
+            $adapter = new ScopusApiPublicationAdapter($this->abstract);
+            $this->args = $adapter->getArgs();
+
+            $builder = new PublicationInsertArgsBuilder(
+                $this->args,
+                $this->author_observatory,
+                $this->publication_cache,
+                $this->config
+            );
+            $this->args = $builder->getArgs();
 
             // 30.10.2018
             // After it was fetched, we will update the information about the publication in the cache, so that
@@ -252,43 +267,12 @@ class PublicationFetcher
 
             // 31.10.2018
             // Also adding the title of the publication as meta data to the cache
-            $this->publication_cache->write(
-                $scopus_id,
-                $coredata->getTitle(),
-                $coredata->getCoverDate()
-            );
+            $this->insertPublicationCache();
 
             // Checking if the publication is too old, by comparing it with the max date given by the arguments
-            $date = $coredata->getCoverDate();
-            $time_difference = strtotime($date) - strtotime($this->args['date_limit']);
-            if ($time_difference <= 0) {
-                $this->log->info(sprintf('DISMISSED, TOO OLD: "%s" PUBLISHED "%s"', $this->title, $date));
+            if ($this->isPublicationOld() || $this->isPublicationBlacklisted()) {
                 continue;
             }
-
-            // Checking for the author black and white listings
-            $publication_check = $this->author_observatory->checkPublication($this->abstract);
-
-            // 31.12.2018
-            // Here we extract the information of the affiliation ids for the observed authors of the publication to
-            // also save them within the PublicationPost object
-            $author_affiliations = $this->author_observatory->getAffiliationsPublication($this->abstract, TRUE);
-
-            // 06.11.2018
-            // Chose a stricter affiliation policy: Everything, that is not exactly whitelisted gets dismissed right
-            // away.
-            if ($publication_check <= 0) {
-                $this->log->info(sprintf('DISMISSED, BLACKLISTED: "%s"', $this->title));
-                continue;
-            }
-
-            // Will return an array containing the authors
-            $authors = $this->getAuthors();
-            $author_count = count($authors);
-
-            // 27.01.2020
-            // Returns the string to be used as the collaboration value of the publication
-            $collaboration = $this->getCollaboration();
 
             // 06.11.2018
             // Added a 'status' option to the argument array, which can be 'publish' or 'draft'. If there is a
@@ -301,35 +285,18 @@ class PublicationFetcher
             // Added a new field to the args array "topics". This field will contain a string, which is the
             // concatenation of the categories array. This string is being saved as a meta key and will help to order
             // the admin list view by the topics
-            $categories = array_merge($this->author_observatory->getCategoriesPublication($this->abstract), array('Publications'));
-            $topics = array_intersect($categories, ScopusOptions::getAuthorCategories());
-            sort($topics);
-            $args = array(
-                'title'                 => $this->title,
-                'status'                => ($collaboration == 'ANY' ? 'draft' : 'publish'),
-                'abstract'              => $coredata->getDescription(),
-                'published'             => $coredata->getCoverDate(),
-                'scopus_id'             => $coredata->getScopusId(),
-                'doi'                   => $coredata->getDoi(),
-                'eid'                   => $this->getAbtractEid($this->abstract),
-                'issn'                  => $coredata->getIssn(),
-                'journal'               => $coredata->getPublicationName(),
-                'volume'                => $coredata->getVolume(),
-                'tags'                  => $this->getTags($this->abstract),
-                'authors'               => $authors,
-                'author_count'          => $author_count,
-                'author_affiliations'   => $author_affiliations,
-                'categories'            => $categories,
-                'collaboration'         => $collaboration,
-                'topics'                => implode(', ', $topics),
-            );
             try{
-                $this->post_id = PublicationPost::insert($args);
+                $this->post_id = PublicationPost::insert($this->args);
             } catch (\Error $e) {
                 $this->log->error($e->getMessage());
+                continue;
             }
 
-            $this->log->info(sprintf('<a href="%s">PUBLICATION "%s"</a>',get_the_permalink($this->post_id), $this->title));
+            $this->log->info(sprintf(
+                '<a href="%s">PUBLICATION "%s"</a>',
+                get_the_permalink($this->post_id),
+                $this->args['title']
+            ));
 
             // 31.12.2018
             // Here we are incrementing the current amount of fetched publications, only after we have successfully
@@ -344,146 +311,64 @@ class PublicationFetcher
         $this->publication_cache->save();
     }
 
-    /**
-     * Returns an array, where the keys are the author names and the values are the author ids of the authors of the
-     * current publication. The list is limited to the amount passed by the arguments.
-     *
-     * CHANGELOG
-     *
-     * Added 29.10.2018
-     *
-     * @since 0.0.0.2
-     *
-     * @return array
-     */
-    public function getAuthors() {
-        $result = array();
-        $authors = $this->abstract->getAuthors();
+    // HELPER FUNCTIONS
+    // ****************
 
-        // For the generation of the author metrics it is important, that if there are any observed authors also
-        // authors of the publication, that these will preferably added as author terms before all else.
-
-        // Now we just fill up the list of authors more or less randomly
-        $counter = 0;
-        foreach ($authors as $author) {
-            $id = sprintf("%s", $author->getId());
-            if ($counter <= $this->args['author_limit']) {
-                $result[$author->getIndexedName()] = $author->getId();
-                $counter++;
-            } else if (in_array($id, $this->author_ids)) {
-                $result[$author->getIndexedName()] = $id;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Returns the EID string for the given abstract
-     *
-     * CHANGELOG
-     *
-     * Changed 08.08.2018
-     * Moved the whole functionality over to the new "Command" system
-     *
-     * @since 0.0.1.14
-     *
-     * @param \Scopus\Response\Abstracts $abstract
-     * @return string
-     */
-    private function getAbtractEid(Abstracts $abstract) {
-        $coredata = $abstract->getCoredata();
-        // This is a hack to access protected fields in PHP. This is needed because there is no public getter function
-        // for the eid
-        $closure = function () { return $this->data; };
-        $data = Closure::bind($closure, $coredata, AbstractCoredata::class)();
-        if ( array_key_exists('eid', $data) ){
-            return $data['eid'];
+    public function isPublicationOld() {
+        $difference = strtotime($this->args['published']) - strtotime($this->config['date_limit']);
+        if ($difference <= 0) {
+            $this->log->info(sprintf(
+                'DISMISSED, TOO OLD: "%s" PUBLISHED "%s"',
+                $this->args['title'],
+                $this->args['published']
+            ));
+            return true;
         } else {
-            return '';
+            return false;
         }
     }
 
-    /**
-     * Returns the list of tags for the given abstract object
-     *
-     * CHANGELOG
-     *
-     * @since 0.0.1.14
-     *
-     * @param \Scopus\Response\Abstracts $abstract
-     * @return array
-     */
-    private function getTags(Abstracts $abstract) {
-        $closure = function() { return $this->data; };
-        $data = Closure::bind($closure, $abstract, Abstracts::class)();
-
-        try {
-            if ( array_key_exists('idxterms', $data) ) {
-                $mainterm = $data['idxterms']['mainterm'];
-                $tags = array();
-                foreach ( $mainterm as $entry ){
-                    $tag = $entry['$'];
-                    $tags[] = $tag;
-                }
-                return $tags;
-            } else {
-                return array();
-            }
-        } catch (Exception $e) {
-            $this->log->error('THERE WAS A PROBLEM WITH GETTING THE TAGS OF ' . $this->scopus_id);
-            return array();
-        }
-    }
-
-    /**
-     * This function will return the value, which will be used for the collaboration field of the publication during
-     * the insert operation
-     *
-     * CHANGELOG
-     *
-     * Added 27.01.2020
-     *
-     * @return string
-     */
-    private function getCollaboration() {
-        // First thing we check, if there is a collaboration value already saved in the publication meta cache
-        // if it does exists, we'll obviously be using that one
-        $collaboration_exists = $this->publication_cache->keyExists($this->scopus_id, 'collaboration');
-        if ($collaboration_exists) {
-            return $this->publication_cache->readMeta($this->scopus_id, 'collaboration');  // type: string
-        }
-
-        // In case there is no value for it yet, we will use a specific strategy to determine if the publication
-        // in question is a collaboration paper (ANY) or not (NONE)
-        return $this->guessCollaboration();
-    }
-
-    /**
-     * This method will guess whether the current publication is likely to be a collaboration paper (in which case the
-     * collaboration value will be ANY symbolizing an unknown collaboration), or not (in which case the value will be
-     * NONE)
-     * This method makes the decision based on the amount of authors, which the publication has. If this count exceeds
-     * the limit (which was given as a parameter to the fetcher object), it will be declared a collaboration.
-     *
-     * CHANGELOG
-     *
-     * Added 27.01.2020
-     *
-     * @return string
-     */
-    private function guessCollaboration() {
-        $author_count = count($this->abstract->getAuthors());
-        if ($author_count > $this->args['collaboration_limit']) {
-            return "ANY";
+    public function isPublicationBlacklisted() {
+        $check = $this->author_observatory->checkAuthorAffiliations($this->args['author_affiliations']);
+        if ($check <= 0) {
+            $this->log->info(sprintf(
+                'DISMISSED, BLACKLISTED: "%s"',
+                $this->args['title']
+            ));
+            return true;
         } else {
-            return "NONE";
+            return false;
         }
     }
 
-    // ****************************
     // META CACHE RELATED FUNCTIONS
     // ****************************
+    // These are helper functions to wrap functionality especially concerning the publication meta cache.
+
+    public function insertPublicationCache() {
+        $this->publication_cache->write(
+            $this->args['scopus_id'],
+            $this->args['title'],
+            $this->args['published']
+        );
+    }
+
+    public function isCacheDismissed(string $scopus_id) {
+        if ($this->publication_cache->contains($scopus_id)) {
+            // First we check if the publication is too old
+            if ($this->checkCacheTooOld($scopus_id)) {
+                return true;
+            }
+
+            // 28.11.2019
+            // Now we also need to check for the "exclude" boolean flag within the meta cache. If it is true the
+            // publication should also not be loaded...
+            if ($this->checkCacheExclude($scopus_id)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Given a scopus id, this function will check if the publication has been flagged with the boolean "exclude" flag
@@ -520,18 +405,195 @@ class PublicationFetcher
      * TRUE will be returned, otherwise FALSE.
      * The method additionally creates a log info message, informing, that the publication is to old.
      *
+     * CHANGELOG
+     *
+     * Added 29.11.2019
+     *
      * @param string $scopus_id
      * @return bool
      */
     public function checkCacheTooOld(string $scopus_id) {
         $date = $this->publication_cache->getPublishingDate($scopus_id);
         $title = $this->publication_cache->getTitle($scopus_id);
-        $time_difference = strtotime($date) - strtotime($this->args['date_limit']);
+        $time_difference = strtotime($date) - strtotime($this->config['date_limit']);
         if ($time_difference <= 0) {
             $this->log->info(sprintf('DISMISSED, TOO OLD (CACHED): "%s" PUBLISHED "%s"', $title, $date));
             return true;
         }
 
         return false;
+    }
+
+    // DEPRECATED METHODS
+    // ******************
+    // These methods have been used before, but are no longer required, as their functionality has been replaced
+
+    /**
+     * Returns an array, where the keys are the author names and the values are the author ids of the authors of the
+     * current publication. The list is limited to the amount passed by the arguments.
+     *
+     * CHANGELOG
+     *
+     * Added 29.10.2018
+     *
+     * Deprecated 30.04.2020
+     * The responsibility of creating the publication insert args array was outsourced to the classes
+     * ScopusApiPublicationAdapter and PublicationInsertArgsBuilder...
+     *
+     * @deprecated
+     *
+     * @since 0.0.0.2
+     *
+     * @return array
+     */
+    public function getAuthors() {
+        $result = array();
+        $authors = $this->abstract->getAuthors();
+
+        // For the generation of the author metrics it is important, that if there are any observed authors also
+        // authors of the publication, that these will preferably added as author terms before all else.
+
+        // Now we just fill up the list of authors more or less randomly
+        $counter = 0;
+        foreach ($authors as $author) {
+            $id = sprintf("%s", $author->getId());
+            if ($counter <= $this->config['author_limit']) {
+                $result[$author->getIndexedName()] = $author->getId();
+                $counter++;
+            } else if (in_array($id, $this->author_ids)) {
+                $result[$author->getIndexedName()] = $id;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns the EID string for the given abstract
+     *
+     * CHANGELOG
+     *
+     * Changed 08.08.2018
+     * Moved the whole functionality over to the new "Command" system
+     *
+     * Deprecated 30.04.2020
+     * The responsibility of creating the publication insert args array was outsourced to the classes
+     * ScopusApiPublicationAdapter and PublicationInsertArgsBuilder...
+     *
+     * @deprecated
+     *
+     * @since 0.0.1.14
+     *
+     * @param \Scopus\Response\Abstracts $abstract
+     * @return string
+     */
+    private function getAbtractEid(Abstracts $abstract) {
+        $coredata = $abstract->getCoredata();
+        // This is a hack to access protected fields in PHP. This is needed because there is no public getter function
+        // for the eid
+        $closure = function () { return $this->data; };
+        $data = Closure::bind($closure, $coredata, AbstractCoredata::class)();
+        if ( array_key_exists('eid', $data) ){
+            return $data['eid'];
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Returns the list of tags for the given abstract object
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * Deprecated 30.04.2020
+     * The responsibility of creating the publication insert args array was outsourced to the classes
+     * ScopusApiPublicationAdapter and PublicationInsertArgsBuilder...
+     *
+     * @deprecated
+     *
+     * @since 0.0.1.14
+     *
+     * @param \Scopus\Response\Abstracts $abstract
+     * @return array
+     */
+    private function getTags(Abstracts $abstract) {
+        $closure = function() { return $this->data; };
+        $data = Closure::bind($closure, $abstract, Abstracts::class)();
+
+        try {
+            if ( array_key_exists('idxterms', $data) ) {
+                $mainterm = $data['idxterms']['mainterm'];
+                $tags = array();
+                foreach ( $mainterm as $entry ){
+                    $tag = $entry['$'];
+                    $tags[] = $tag;
+                }
+                return $tags;
+            } else {
+                return array();
+            }
+        } catch (Exception $e) {
+            $this->log->error('THERE WAS A PROBLEM WITH GETTING THE TAGS OF ' . $this->scopus_id);
+            return array();
+        }
+    }
+
+    /**
+     * This function will return the value, which will be used for the collaboration field of the publication during
+     * the insert operation
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * Deprecated 30.04.2020
+     * The responsibility of creating the publication insert args array was outsourced to the classes
+     * ScopusApiPublicationAdapter and PublicationInsertArgsBuilder...
+     *
+     * @deprecated
+     *
+     * @return string
+     */
+    private function getCollaboration() {
+        // First thing we check, if there is a collaboration value already saved in the publication meta cache
+        // if it does exists, we'll obviously be using that one
+        $collaboration_exists = $this->publication_cache->keyExists($this->scopus_id, 'collaboration');
+        if ($collaboration_exists) {
+            return $this->publication_cache->readMeta($this->scopus_id, 'collaboration');  // type: string
+        }
+
+        // In case there is no value for it yet, we will use a specific strategy to determine if the publication
+        // in question is a collaboration paper (ANY) or not (NONE)
+        return $this->guessCollaboration();
+    }
+
+    /**
+     * This method will guess whether the current publication is likely to be a collaboration paper (in which case the
+     * collaboration value will be ANY symbolizing an unknown collaboration), or not (in which case the value will be
+     * NONE)
+     * This method makes the decision based on the amount of authors, which the publication has. If this count exceeds
+     * the limit (which was given as a parameter to the fetcher object), it will be declared a collaboration.
+     *
+     * CHANGELOG
+     *
+     * Added 27.01.2020
+     *
+     * Deprecated 30.04.2020
+     * The responsibility of creating the publication insert args array was outsourced to the classes
+     * ScopusApiPublicationAdapter and PublicationInsertArgsBuilder...
+     *
+     * @deprecated
+     *
+     * @return string
+     */
+    private function guessCollaboration() {
+        $author_count = count($this->abstract->getAuthors());
+        if ($author_count > $this->config['collaboration_limit']) {
+            return "ANY";
+        } else {
+            return "NONE";
+        }
     }
 }

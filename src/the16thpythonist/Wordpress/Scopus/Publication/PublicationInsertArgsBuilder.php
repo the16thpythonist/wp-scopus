@@ -345,11 +345,16 @@ class PublicationInsertArgsBuilder
      *
      * Added 29.04.2020
      *
+     * Changed 30.04.2020
+     * Sorting the final topics array now as well.
+     *
      * @param array $categories
      * @return array
      */
     protected function getTopics(array $categories): array {
-        return array_intersect(ScopusOptions::getAuthorCategories(), $categories);
+        $topics =  array_intersect(ScopusOptions::getAuthorCategories(), $categories);
+        sort($topics);
+        return $topics;
     }
 
     // HELPER METHODS
