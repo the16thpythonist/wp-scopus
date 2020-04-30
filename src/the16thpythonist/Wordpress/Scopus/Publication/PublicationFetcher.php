@@ -21,6 +21,32 @@ use the16thpythonist\Wordpress\Scopus\ScopusOptions;
 /**
  * Class PublicationFetcher
  *
+ * BACKGROUND
+ *
+ * So this is how the whole WpScopus application works at the very base: Within the wordpress system you define authors
+ * to be observed and based on these authors a list of all publications will be made and then these publications are
+ * fetched from an online database and imported as post into the wordpress database.
+ *
+ * This is basically what this class does. You pass it a config array and a log object as the arguments to the
+ * constructor and from there on it will work as a generator, which will assemble this list of all publications from
+ * the observed authors and then in each iteration it will judge based on the configuration parameters whether to
+ * import the publication or not. As it is a generator a new iteration will be invoked by the "next()" method. This
+ * method will iterate until it finds a publication to be imported and then returns the post id of the newly
+ * inserted wordpress post
+ *
+ * Caution: One call to the next() method does not equal one iteration then. It will silently dismiss all the unfit
+ * publications until it finds one to be fitting.
+ *
+ * EXAMPLE
+ *
+ * ```php
+ * $log = new VoidLog();
+ * $fetcher = new PublicationFetcher([], $log);
+ * foreach($fetcher->next() as $post_id) {
+ *      echo $post_id;
+ * }
+ * ```
+ *
  * CHANGELOG
  *
  * Added 28.10.2018
@@ -116,6 +142,10 @@ class PublicationFetcher
      * Changed 30.10.2018
      * Now using an additional object, the PublicationMetaCache, which will save the publishing date for every fetched
      * publication and make it possible to check if it is too old even before the database request has to be made.
+     *
+     * Changed 30.04.2020
+     * Changed the original args attribute to "config"
+     * Initializing the new args attribute as an empty array.
      *
      * @since 0.0.0.2
      *
@@ -230,14 +260,10 @@ class PublicationFetcher
                 break;
             }
 
-            // 30.10.2018
-            // Before we request the publication from the scopus database, we check if the publication cache contains
-            // an entry about the current scopus id and if it does we check the publishing date from the cache with
-            // the date limit and eventually dismiss the publication before causing unnecessary network traffic
-
-            // 31.10.2018
-            // Getting the title of the publication from the cache now, because before it would just use the title
-            // of the last published publication for all log entries after that
+            // isCacheDismissed will first check if the current publication is already present in the cache and then
+            // check if it can be dismissed by the information present there.
+            // This check is being made before the actual api call is being made, as it will save a lot of time waiting
+            // for the network responses...
             if ($this->isCacheDismissed($scopus_id)) {
                 continue;
             }
@@ -249,42 +275,35 @@ class PublicationFetcher
                 continue;
             }
 
+            // The responsibility of this class is to destill all the necessary information from the api response
+            // object into a partial arguments array
             $adapter = new ScopusApiPublicationAdapter($this->abstract);
             $this->args = $adapter->getArgs();
 
+            // The responsibility of this class is to extend that partial array extracted from the api response and
+            // extend it with all the data, which is dependent on the current state of the wordpress database, that is
+            // the author observatory and the publication cache.
             $builder = new PublicationInsertArgsBuilder(
                 $this->args,
                 $this->author_observatory,
                 $this->publication_cache,
-                $this->config
+                $this->config // The key names of the config for this class and the builder are the same, thus we can
+                              // Just use this config also for the builder.
             );
             $this->args = $builder->getArgs();
 
-            // 30.10.2018
-            // After it was fetched, we will update the information about the publication in the cache, so that
-            // during the next fetch process, we can use the cached meta data.
-            // At this point only the publishing date is saved inside as meta data in the cache.
-
-            // 31.10.2018
-            // Also adding the title of the publication as meta data to the cache
+            // This method will insert the current publication as a new entry into the meta cache
             $this->insertPublicationCache();
 
-            // Checking if the publication is too old, by comparing it with the max date given by the arguments
+            // isPublicationOld will be true, if the publishing date of the current publication is below the date
+            // defined as "date_limit" in the config.
+            // isPublicationBlacklisted will use the author affiliation array to check if any of these affiliations
+            // requires a blacklisting. The method will return true of that is the case
             if ($this->isPublicationOld() || $this->isPublicationBlacklisted()) {
                 continue;
             }
 
-            // 06.11.2018
-            // Added a 'status' option to the argument array, which can be 'publish' or 'draft'. If there is a
-            // collaboration publication, we don't want that on the site until we know which publication it is from
-            // and that has to be evaluated by another script or manually at the moment.
-            // 31.12.2018
-            // Added the 'author_affiliations' argument to also be inserted.
-            // 03.12.2019
-            // Moved the computation of the categories array outside of the array definition.
-            // Added a new field to the args array "topics". This field will contain a string, which is the
-            // concatenation of the categories array. This string is being saved as a meta key and will help to order
-            // the admin list view by the topics
+
             try{
                 $this->post_id = PublicationPost::insert($this->args);
             } catch (\Error $e) {
@@ -314,7 +333,16 @@ class PublicationFetcher
     // HELPER FUNCTIONS
     // ****************
 
-    public function isPublicationOld() {
+    /**
+     * Returns whether or not the current publication is too old to be included.
+     *
+     * CHANGELOG
+     *
+     * Added 30.04.2020
+     *
+     * @return bool
+     */
+    public function isPublicationOld(): bool {
         $difference = strtotime($this->args['published']) - strtotime($this->config['date_limit']);
         if ($difference <= 0) {
             $this->log->info(sprintf(
@@ -328,7 +356,16 @@ class PublicationFetcher
         }
     }
 
-    public function isPublicationBlacklisted() {
+    /**
+     * Returns whether or not the current publication is considered to be on the blacklist.
+     *
+     * CHANGELOG
+     *
+     * Added 30.04.2020
+     *
+     * @return bool
+     */
+    public function isPublicationBlacklisted(): bool {
         $check = $this->author_observatory->checkAuthorAffiliations($this->args['author_affiliations']);
         if ($check <= 0) {
             $this->log->info(sprintf(
@@ -345,6 +382,13 @@ class PublicationFetcher
     // ****************************
     // These are helper functions to wrap functionality especially concerning the publication meta cache.
 
+    /**
+     * Inserts the current publication into the cache.
+     *
+     * CHANGELOG
+     *
+     * Addded 30.04.2020
+     */
     public function insertPublicationCache() {
         $this->publication_cache->write(
             $this->args['scopus_id'],
@@ -353,7 +397,17 @@ class PublicationFetcher
         );
     }
 
-    public function isCacheDismissed(string $scopus_id) {
+    /**
+     * Returns whether or not the publication is to be dismissed due to information contained about it in the cache.
+     *
+     * CHANGELOG
+     *
+     * Added 30.04.2020
+     *
+     * @param string $scopus_id
+     * @return bool
+     */
+    public function isCacheDismissed(string $scopus_id): bool {
         if ($this->publication_cache->contains($scopus_id)) {
             // First we check if the publication is too old
             if ($this->checkCacheTooOld($scopus_id)) {

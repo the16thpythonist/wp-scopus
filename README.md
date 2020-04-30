@@ -283,3 +283,11 @@ some point, if the post is deleted then and fetched again, the saved collaborati
     - Did this because this editor sort of prevented the collaboration caching feature from the previous version from 
       working properly. This is due to the fact, that when a post is updated with Gutenberg, the custom taxonomy 
       changes have NOT been applied once the "save_post" or "post_updated" filters are executed.
+      
+      
+ ## TODO
+ 
+ - Wrap the functionality of the InsertArgsBuilder and the PublicationAdapter in a 
+ single class maybe called "PublicationImporter"
+ - "PublicationFetcher" has too many concerns. I could imagine you could refactor it to be more 
+ modular.
