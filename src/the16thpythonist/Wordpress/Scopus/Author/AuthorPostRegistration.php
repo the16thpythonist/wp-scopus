@@ -397,6 +397,9 @@ class AuthorPostRegistration implements PostRegistration
         <script>
             <?php echo $parameters_code; ?>
         </script>
+        <div id="author-meta-input">
+
+        </div>
         <div id="scopus-author-input">
             <author-input></author-input>
         </div>

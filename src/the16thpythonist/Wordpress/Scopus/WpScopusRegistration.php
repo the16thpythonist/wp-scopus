@@ -161,11 +161,19 @@ class WpScopusRegistration
      * CHANGELOG
      *
      * Added 11.02.2019
+     *
+     * Changed 01.05.2020
+     * Added the compiled VUE frontend stylesheet
      */
     public function enqueueStylesheets() {
         wp_enqueue_style(
             'wp-scopus-style',
             plugin_dir_url(__FILE__) . 'scopus.css'
+        );
+
+        wp_enqueue_style(
+            'wpscopus-frontend',
+            plugin_dir_url(__FILE__) . "frontend/dist/wpscopuslib.css"
         );
     }
 
@@ -179,11 +187,22 @@ class WpScopusRegistration
      * CHANGELOG
      *
      * Added 11.02.2019
+     *
+     * Changed 01.05.2020
+     * Added the compiled Vue frontend script in "frontend/dist/wpscopus.umd.js"
      */
     public function enqueueScripts() {
         wp_enqueue_script(
             'scopus-build',
             plugin_dir_url(__FILE__) . 'scopuswp-build.js',
+            [],
+            '0.0.0.0',
+            true
+        );
+
+        wp_enqueue_script(
+            'wpscopus-frontend',
+            plugin_dir_url(__FILE__) . 'frontend/dist/wpscopuslib.umd.js',
             [],
             '0.0.0.0',
             true
