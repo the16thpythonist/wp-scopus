@@ -19,12 +19,22 @@
     export default {
         name: "DescribedTextInput",
         props: {
-            value: String,
-            title: String,
-            id: String,
+            value: {
+                type:       String,
+                required:   true
+            },
+            title: {
+                type:       String,
+                required:   true,
+            },
+            id: {
+                type:       String,
+                required:   true
+            },
             placeholder: {
-                default: '',
-                type: String
+                type:       String,
+                required:   false,
+                default:    ''
             }
         },
         methods: {
