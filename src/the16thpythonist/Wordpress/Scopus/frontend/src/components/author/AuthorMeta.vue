@@ -6,6 +6,11 @@
         <p>Nothing here yet</p>
         <!-- The simple inputs for the authors name -->
         <h1>Edit Author Properties</h1>
+        <p>
+            Edit the authors personal information, the ScopusID's and the categories associated
+            with him:
+        </p>
+
         <DescribedTextInput
                 class="text-input"
                 v-model="firstName"
@@ -55,6 +60,7 @@
 
     .text-input {
         margin-top: 15px;
+        margin-bottom: 15px;
         font-size: 1.2em;
     }
 </style>

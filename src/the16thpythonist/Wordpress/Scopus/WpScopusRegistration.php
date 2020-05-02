@@ -192,6 +192,7 @@ class WpScopusRegistration
      * Added the compiled Vue frontend script in "frontend/dist/wpscopus.umd.js"
      */
     public function enqueueScripts() {
+        /*
         wp_enqueue_script(
             'scopus-build',
             plugin_dir_url(__FILE__) . 'scopuswp-build.js',
@@ -199,7 +200,8 @@ class WpScopusRegistration
             '0.0.0.0',
             true
         );
-
+        */
+        wp_enqueue_script('vue', 'https://unpkg.com/vue');
         wp_enqueue_script(
             'wpscopus-frontend',
             plugin_dir_url(__FILE__) . 'frontend/dist/wpscopuslib.umd.js',

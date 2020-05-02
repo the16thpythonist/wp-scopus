@@ -400,9 +400,11 @@ class AuthorPostRegistration implements PostRegistration
         <div id="author-meta-input">
 
         </div>
+        <!--
         <div id="scopus-author-input">
             <author-input></author-input>
         </div>
+        -->
 
         <!--
         Changed 11.10.2019

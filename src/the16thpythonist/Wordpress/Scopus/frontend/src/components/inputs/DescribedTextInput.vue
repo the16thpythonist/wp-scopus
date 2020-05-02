@@ -1,11 +1,14 @@
 <template>
     <div class="described-text-input">
-        <span class="title">
+        <label :for="id" class="title">
             {{ title }}:
-        </span>
+        </label>
         <input
+                :value="value"
                 class="input"
                 type="text"
+                ref="inputField"
+                @input="onInput"
                 :id="id"
                 :name="id"
                 :placeholder="placeholder">
@@ -22,6 +25,18 @@
             placeholder: {
                 default: '',
                 type: String
+            }
+        },
+        methods: {
+            /**
+             * Emits the current value of the inputField as the "input" event to the parent component
+             *
+             * CHANGELOG
+             *
+             * Added 02.05.2020
+             */
+            onInput: function() {
+                this.$emit('input', this.$refs.inputField.value);
             }
         }
     }
