@@ -28,6 +28,18 @@
         </DescribedTextInput>
         <!-- The complex input for the ids and the categories -->
 
+        <ArrayTextInput
+                class="array-text-input"
+                v-model="scopusIDs"
+                title="ScopusID's: ">
+        </ArrayTextInput>
+
+        <ArrayTextInput
+                class="array-text-input"
+                v-model="categories"
+                title="Categories: ">
+        </ArrayTextInput>
+
         <!-- The affiliation input -->
         <h1>Author Affiliations</h1>
 
@@ -38,29 +50,38 @@
 
 <script>
     import DescribedTextInput from "../inputs/DescribedTextInput";
+    import ArrayTextInput from "../inputs/ArrayTextInput";
 
     export default {
         name: "AuthorMeta",
         components: {
-            DescribedTextInput
+            DescribedTextInput,
+            ArrayTextInput
         },
         data: function () {
             return {
                 firstName: '',
-                lastName: ''
+                lastName: '',
+                scopusIDs: ["12", "10"],
+                categories: ["cells", "microbes"]
             }
         }
     }
 </script>
 
 <style scoped>
-    .author-meta-input p {
-        font-size: 1.5em;
+
+    h1 {
+        margin-top: 20px;
     }
 
-    .text-input {
-        margin-top: 15px;
-        margin-bottom: 15px;
+    .author-meta-input p {
+        font-size: 1.3em;
+    }
+
+    .text-input, .array-text-input{
+        margin-top: 20px;
+        margin-bottom: 20px;
         font-size: 1.2em;
     }
 </style>
