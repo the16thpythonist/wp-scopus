@@ -34,11 +34,13 @@
                 title="ScopusID's: ">
         </ArrayTextInput>
 
-        <ArrayTextInput
-                class="array-text-input"
+        <ArraySelectInput
+                class="array-select-input"
                 v-model="categories"
-                title="Categories: ">
-        </ArrayTextInput>
+                :options="options"
+                title="Categories: "
+                :default="defaultCategory">
+        </ArraySelectInput>
 
         <!-- The affiliation input -->
         <h1>Author Affiliations</h1>
@@ -51,19 +53,23 @@
 <script>
     import DescribedTextInput from "../inputs/DescribedTextInput";
     import ArrayTextInput from "../inputs/ArrayTextInput";
+    import ArraySelectInput from "../inputs/ArraySelectInput";
 
     export default {
         name: "AuthorMeta",
         components: {
             DescribedTextInput,
-            ArrayTextInput
+            ArrayTextInput,
+            ArraySelectInput
         },
         data: function () {
             return {
                 firstName: '',
                 lastName: '',
                 scopusIDs: ["12", "10"],
-                categories: ["cells", "microbes"]
+                options: ["cells", "microbes", "plants", "birds"],
+                categories: ["cells", "microbes", ""],
+                defaultCategory: "cells"
             }
         }
     }
@@ -79,7 +85,7 @@
         font-size: 1.3em;
     }
 
-    .text-input, .array-text-input{
+    .text-input, .array-text-input, .array-select-input{
         margin-top: 20px;
         margin-bottom: 20px;
         font-size: 1.2em;
