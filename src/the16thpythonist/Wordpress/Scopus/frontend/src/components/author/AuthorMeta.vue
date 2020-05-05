@@ -45,6 +45,15 @@
         <!-- The affiliation input -->
         <h1>Author Affiliations</h1>
 
+        <ObjectRadioSelect
+                class="object-radio-select"
+                v-model="affiliations"
+                :options="affiliationOptions"
+                :default="affiliationOptions[0]"
+                title="Authors Affiliations"
+                label="Affiliations:">
+        </ObjectRadioSelect>
+        <button type="button" @click.prevent="test"></button>
         <!-- Saving the changes -->
         <!-- Maybe have a red display that says changes have been made and they have to be saved -->
     </div>
@@ -54,10 +63,14 @@
     import DescribedTextInput from "../inputs/DescribedTextInput";
     import ArrayTextInput from "../inputs/ArrayTextInput";
     import ArraySelectInput from "../inputs/ArraySelectInput";
+    import RadioGroup from "../inputs/RadioGroup";
+    import ObjectRadioSelect from "../inputs/ObjectRadioSelect";
 
     export default {
         name: "AuthorMeta",
         components: {
+            ObjectRadioSelect,
+            RadioGroup,
             DescribedTextInput,
             ArrayTextInput,
             ArraySelectInput
@@ -69,7 +82,19 @@
                 scopusIDs: ["12", "10"],
                 options: ["cells", "microbes", "plants", "birds"],
                 categories: ["cells", "microbes", ""],
-                defaultCategory: "cells"
+                defaultCategory: "cells",
+                affiliations: {
+                    KIT:    '',
+                    IMP:    '',
+                    HSOG:   ''
+                },
+                affiliationOptions: ['unset', 'blacklist', 'whitelist']
+            }
+        },
+        methods: {
+            test: function () {
+                console.log('hello');
+                this.$set(this.affiliations, 'IPE', 'unset');
             }
         }
     }
@@ -85,7 +110,7 @@
         font-size: 1.3em;
     }
 
-    .text-input, .array-text-input, .array-select-input{
+    .text-input, .array-text-input, .array-select-input, .object-radio-select{
         margin-top: 20px;
         margin-bottom: 20px;
         font-size: 1.2em;
