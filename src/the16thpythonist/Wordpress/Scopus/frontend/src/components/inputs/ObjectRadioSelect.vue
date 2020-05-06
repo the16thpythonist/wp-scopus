@@ -35,7 +35,11 @@
 <script>
     import RadioGroup from "./RadioGroup";
 
-    
+    /*
+        Ok so the idea is to give this component optional properties "nameFunc" and "assignFunc", which control
+        how to generate the name for a row and how to assign the selected data to the given object structure
+        respectively.
+     */
 
     export default {
         name: "ObjectRadioSelect",
@@ -65,6 +69,14 @@
                 type:       String,
                 required:   false,
                 default:    ''
+            },
+            // This seems to work
+            nameFunc: {
+                type:       Function,
+                required:   false,
+                default:    function (obj, key) {
+                    return key;
+                }
             }
         },
         data: function () {
