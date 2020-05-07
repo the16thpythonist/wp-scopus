@@ -15,16 +15,18 @@
         </div>
         <div
                 class="row"
-                v-for="(key, index) in Object.keys(data)">
+                v-for="(key, index) in Object.keys(data)"
+                :key="key">
             <span class="row-label">
-                {{ key }}
+                {{ nameFunc(value, key) }}
             </span>
             <RadioGroup
                     class="row-options"
-                    v-model="data[key]"
+                    :value="get(key)"
+                    @input="set(key, $event)"
+                    @input="onInput"
                     :options="options"
                     :ref="index"
-                    @input="onInput"
                     @keyup.up.prevent="moveUp(index)"
                     @keyup.down.prevent="moveDown(index)">
             </RadioGroup>
@@ -40,6 +42,7 @@
         how to generate the name for a row and how to assign the selected data to the given object structure
         respectively.
      */
+
 
     export default {
         name: "ObjectRadioSelect",
@@ -77,35 +80,80 @@
                 default:    function (obj, key) {
                     return key;
                 }
+            },
+            setFunc: {
+                type:       Function,
+                required:   false,
+                default:    function (vm, obj, key, value) {
+                    vm.$set(obj, key, value);
+                }
+            },
+            getFunc: {
+                type:       Function,
+                required:   false,
+                default:    function (vm, obj, key) {
+                    return obj[key];
+                }
             }
         },
         data: function () {
-
-            let result = {};
-            for (let prop in this.value) {
-                if(this.value.hasOwnProperty(prop)) {
-                    if (this.options.includes(this.value[prop])) {
-                        result[prop] = this.value[prop];
-                    } else {
-                        result[prop] = this.default;
-                    }
-                }
-            }
-
             return {
-                data: result,
-                length: Object.keys(result).length
+                data: {},
+                length: Object.keys(this.value).length
             }
         },
         methods: {
+            /**
+             * Returns the current selection choice for the row identified by the given key.
+             *
+             * CHANGELOG
+             *
+             * Added 07.05.2020
+             *
+             * @param    {String}   key     The key, which identifies the row and which is also the key for the object
+             *                              "data", which stores the internal state of the component
+             */
+            get: function (key) {
+                return this.getFunc(this, this.data, key);
+            },
+            /**
+             * Sets a new selection value to the row, which is identified by the given key
+             *
+             * CHANGELOG
+             *
+             * Added 07.05.2020
+             *
+             * @param   {String}    key     The key, which identifies the row that is to be modified
+             * @param   {String}    value   The new value to be set as the selection value of the row in question
+             *                              This has to be one of the values defined in the "options" array
+             */
+            set: function(key, value) {
+                this.setFunc(this, this.data, key, value);
+            },
             /**
              * Gets called, whenever one of the radio group input elements changes
              *
              * CHANGELOG
              *
              * Added 05.05.2020
+             *
+             * Changed 07.05.2020
+             * Moved the actual input emitting to its own function "emitInput", as that very same functionality was
+             * now also needed at some other place in the code.
              */
             onInput: function () {
+                this.emitInput();
+
+            },
+            /**
+             * Emits an "input" event to the parent component, which contains the current value of the internal data
+             * object as the parameter.
+             *
+             * CHANGELOG
+             *
+             * Added 07.05.2020
+             */
+            emitInput: function() {
                 this.$emit('input', this.data);
             },
             /**
@@ -173,7 +221,7 @@
              *
              * Added 05.05.2020
              *
-             * @param index
+             * @param   index
              * @return {string}
              */
             getKeyByIndex: function (index) {
@@ -191,6 +239,35 @@
              */
             getInputByIndex: function (index) {
                 return this.$refs[index][0];
+            },
+            /**
+             * Fills the internal "data" variable with the information provided within the given "obj"
+             *
+             * This method also supports more complex object structures, as it uses the functions "getFunc" and
+             * "setFunc" given as properties to the component to access both the given object and the internal "data"
+             * object.
+             * In case the "obj" value to be set to the data object is a value, which is not contained within the
+             * internal "options" array, the default value (as given by the "default" property) will be set instead.
+             *
+             * CHANGELOG
+             *
+             * Added 07.05.2020
+             *
+             * @param   {Object}  obj   The object, whose values will be used to overwrite the current values of the
+             *                          internal state object "data"
+             */
+            fillData: function(obj) {
+                this.data = {...obj};
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        let value = this.getFunc(this, obj, key);
+                        if (this.options.includes(value)) {
+                            this.setFunc(this, this.data, key, value);
+                        } else {
+                            this.setFunc(this, this.data, key, this.default);
+                        }
+                    }
+                }
             }
         },
         watch: {
@@ -201,19 +278,26 @@
              *
              * Added 05.05.2020
              *
+             * Changed 07.05.2020
+             * Moved the logic of the process to the method "fillData" and now just calling this
+             * method here
+             *
              * @param obj
              */
             value: function (obj) {
-                for (let prop in obj) {
-                    if (obj.hasOwnProperty(prop)){
-                        if (this.options.includes(obj[prop])) {
-                            this.data[prop] = obj[prop];
-                        } else {
-                            this.data[prop] = this.default;
-                        }
-                    }
-                }
+                this.fillData(obj);
             }
+        },
+        /**
+         * This method gets called once, after the component has been created
+         *
+         * CHANGELOG
+         *
+         * Added 07.05.2020
+         */
+        created: function () {
+            this.fillData(this.value);
+            this.emitInput();
         }
     }
 </script>

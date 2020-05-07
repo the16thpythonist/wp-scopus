@@ -47,12 +47,22 @@
 
         <ObjectRadioSelect
                 class="object-radio-select"
-                v-model="affiliations"
+                v-model="affiliations2"
                 :options="affiliationOptions"
                 :default="affiliationOptions[0]"
-                title="Authors Affiliations"
-                label="Affiliations:">
+                title="Authors Affiliations Test"
+                label="Affiliations:"
+                :name-func="function(obj, key) {
+                    return `${obj[key].id}: ${obj[key].name}`;
+                }"
+                :get-func="function(vm, obj, key) {
+                    return obj[key].value;
+                }"
+                :set-func="function(vm, obj, key, value) {
+                    obj[key].value = value;
+                }">
         </ObjectRadioSelect>
+
         <button type="button" @click.prevent="test"></button>
         <!-- Saving the changes -->
         <!-- Maybe have a red display that says changes have been made and they have to be saved -->
@@ -87,6 +97,18 @@
                     KIT:    '',
                     IMP:    '',
                     HSOG:   ''
+                },
+                affiliations2: {
+                    KIT:    {
+                        'name':     'KIT',
+                        'id':       '12',
+                        'value':    '',
+                    },
+                    IMP:    {
+                        'name':     'IMP',
+                        'id':       '13',
+                        'value':    ''
+                    }
                 },
                 affiliationOptions: ['unset', 'blacklist', 'whitelist']
             }

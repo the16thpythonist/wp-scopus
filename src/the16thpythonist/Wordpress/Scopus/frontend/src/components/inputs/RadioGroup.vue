@@ -5,13 +5,13 @@
         available space... -->
         <span
                 class="wrapper"
-                v-for="(value, index) in options"
+                v-for="(val, index) in options"
                 :key="index">
             <input
                     v-model="choice"
                     type="radio"
-                    :value="value"
-                    :checked="value === choice"
+                    :value="val"
+                    :checked="val === choice"
                     :id="`${name}-${index}`"
                     :ref="index"
                     @keyup.right="moveRight(index)"
@@ -155,6 +155,16 @@
                 let index = this.getCurrentIndex();
                 let input = this.getInputByIndex(index);
                 input.focus();
+            },
+            /**
+             * This function does nothing.
+             *
+             * CHANGELOG
+             *
+             * Added 07.05.2020
+             */
+            noop: function () {
+                return;
             }
         },
         watch: {
