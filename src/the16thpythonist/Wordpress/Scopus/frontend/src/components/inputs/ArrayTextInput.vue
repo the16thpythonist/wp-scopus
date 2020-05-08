@@ -142,14 +142,25 @@
                 }
             }
         },
-        /**
-         * CHANGELOG
-         *
-         * Added 02.05.2020
-         */
         watch: {
+            /**
+             * This method gets called every time there is a change to the "value" property of this component.
+             *
+             * The value property is the property which is used by the parent component to feed the actual array
+             * structure into this component. This methods updates the internal "data" attribute with the new value
+             * externally set to the value property
+             *
+             * CHANGELOG
+             *
+             * Added 02.05.2020
+             *
+             * Changed 08.05.2020
+             * Now also updating the internal "index" field with each update of the value property as that was causing a
+             * bug when using the "add" button after an external change.
+             */
             value: function (newValue) {
                 this.data = newValue;
+                this.index = newValue.length;
             }
         }
     }

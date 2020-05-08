@@ -111,10 +111,15 @@
          * CHANGELOG
          *
          * Added 03.05.2020
+         *
+         * Changed 08.05.2020
+         * Now also updating the internal "index" field with each update of the value property as that was causing a
+         * bug when using the "add" button after an external change.
          */
         watch: {
             value: function(newValue) {
                 this.data = newValue;
+                this.index = newValue.length;
             }
         }
     }
