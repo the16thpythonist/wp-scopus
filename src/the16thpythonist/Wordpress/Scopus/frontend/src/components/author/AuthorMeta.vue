@@ -7,13 +7,12 @@
         <!-- The simple inputs for the authors name -->
         <h1>Edit Author Properties</h1>
         <p>
-            Edit the authors personal information, the ScopusID's and the categories associated
-            with him:
+            <>
         </p>
 
         <DescribedTextInput
                 class="text-input"
-                v-model="firstName"
+                v-model="author.firstName"
                 id="author-first-name"
                 placeholder="Maximilian"
                 title="First Name">
@@ -21,7 +20,7 @@
 
         <DescribedTextInput
                 class="text-input"
-                v-model="lastName"
+                v-model="author.lastName"
                 id="author-last-name"
                 placeholder="Mustermann"
                 title="Last Name">
@@ -30,42 +29,60 @@
 
         <ArrayTextInput
                 class="array-text-input"
-                v-model="scopusIDs"
+                v-model="author.scopusIds"
                 title="ScopusID's: ">
         </ArrayTextInput>
 
         <ArraySelectInput
                 class="array-select-input"
-                v-model="categories"
-                :options="options"
+                v-model="author.categories"
+                :options="categories"
                 title="Categories: "
-                :default="defaultCategory">
+                :default="categories[0]">
         </ArraySelectInput>
 
         <!-- The affiliation input -->
         <h1>Author Affiliations</h1>
 
+        <p>
+            <em>Author Affiliations:</em> Within each author's profile inside the scopus database, there is an
+            affiliation associated with him. This affiliation refers to some sort of an institution for which the author
+            currently produces papers and works for.<br>
+            In fact with each individual publication which is retrieved from the scopus database there is a list of
+            authors associated with it. And this list of authors contains small "Snapshots" of the authors profile at
+            the time of publishing the document. This snapshot includes the affiliation of that time. <br>
+            All this is important because in some cases an author might have worked at a different institution and on a
+            different topic from what is to be displayed in this very website altogether. For such an author these kind
+            of old publications would still end up on the website, even though they may not be desired. For this case
+            it is possible to mark some past affiliations of an author as a "blacklisted". This means that when a
+            publication with this author/affiliation combination is automatically retrieved from the scopus database,
+            it is discarded without being imported as a post...
+        </p>
+
+        <p>
+            The widget below presents a listing...
+        </p>
+
         <ObjectRadioSelect
                 class="object-radio-select"
-                v-model="affiliations2"
+                v-model="author.affiliations"
                 :options="affiliationOptions"
                 :default="affiliationOptions[0]"
                 title="Authors Affiliations Test"
                 label="Affiliations:"
-                :name-func="function(obj, key) {
-                    return `${obj[key].id}: ${obj[key].name}`;
-                }"
-                :get-func="function(vm, obj, key) {
-                    return obj[key].value;
-                }"
-                :set-func="function(vm, obj, key, value) {
-                    obj[key].value = value;
-                }">
+                :name-func="createAffiliationLabel"
+                :get-func="getAffiliationValue"
+                :set-func="setAffiliationValue">
         </ObjectRadioSelect>
 
-        <button type="button" @click.prevent="test"></button>
         <!-- Saving the changes -->
         <!-- Maybe have a red display that says changes have been made and they have to be saved -->
+        <button
+                type="button"
+                class="save"
+                @click.prevent="onSave">
+            Save All Changes
+        </button>
     </div>
 </template>
 
@@ -75,6 +92,9 @@
     import ArraySelectInput from "../inputs/ArraySelectInput";
     import RadioGroup from "../inputs/RadioGroup";
     import ObjectRadioSelect from "../inputs/ObjectRadioSelect";
+
+    import author from "../../lib/author";
+    import backend from "../../lib/backend";
 
     export default {
         name: "AuthorMeta",
@@ -87,37 +107,51 @@
         },
         data: function () {
             return {
-                firstName: '',
-                lastName: '',
-                scopusIDs: ["12", "10"],
-                options: ["cells", "microbes", "plants", "birds"],
-                categories: ["cells", "microbes", ""],
-                defaultCategory: "cells",
-                affiliations: {
-                    KIT:    '',
-                    IMP:    '',
-                    HSOG:   ''
-                },
-                affiliations2: {
-                    KIT:    {
-                        'name':     'KIT',
-                        'id':       '12',
-                        'value':    '',
-                    },
-                    IMP:    {
-                        'name':     'IMP',
-                        'id':       '13',
-                        'value':    ''
-                    }
-                },
-                affiliationOptions: ['unset', 'blacklist', 'whitelist']
+                categories: [],
+                affiliationOptions: ['blacklist', 'whitelist'],
+                authorId: '1',
+                author: author.emptyScopusAuthor(),
+                backend: new backend.BackendWrapperMock()
             }
         },
         methods: {
-            test: function () {
-                console.log('hello');
-                this.$set(this.affiliations, 'IPE', 'unset');
+            fetchCategories: function () {
+                let optionsPromise = this.backend.getCategories();
+                let self = this;
+                optionsPromise.then(function (categories) {
+                    self.categories = categories;
+                })
+            },
+            fetchAuthor: function() {
+                let authorPromise = this.backend.getAuthor(this.authorId);
+                let self = this;
+                authorPromise.then(function (author) {
+                    self.author = author;
+                })
+            },
+            onSave: function () {
+                let savePromise = this.backend.saveAuthor(this.author);
+                let self = this;
+                savePromise.then(function (value) {
+                    console.log('Sucessfully saved');
+                }).catch(function (message) {
+                    console.log('Saving failed');
+                })
+            },
+            createAffiliationLabel: function (obj, key) {
+                return `${obj[key].name} (${obj[key].id})`;
+            },
+            getAffiliationValue: function(vm, obj, key) {
+                return (obj[key].whitelist ? 'whitelist' : 'blacklist');
+            },
+            setAffiliationValue: function(vm, obj, key, value) {
+                obj[key].whitelist = (value === 'whitelist');
             }
+        },
+        created() {
+            console.log("I was just created");
+            this.fetchCategories();
+            this.fetchAuthor();
         }
     }
 </script>
@@ -136,5 +170,26 @@
         margin-top: 20px;
         margin-bottom: 20px;
         font-size: 1.2em;
+    }
+
+    button {
+        padding: 3px 15px 3px 15px;
+        border-style: none;
+        background-color: #3ECF8E;
+        color: white;
+        border-radius: 2px;
+        font-size: 0.9em;
+        box-shadow: 0px 1px 10px 0px #c3c3c3;
+    }
+
+    button:hover {
+        background-color: #3fdd9b;
+    }
+
+    button.save {
+        margin-top: 10px;
+        font-size: 1.8em;
+        align-self: center;
+        justify-self: center;
     }
 </style>

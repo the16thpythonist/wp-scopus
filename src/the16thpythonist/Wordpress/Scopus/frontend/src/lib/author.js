@@ -10,13 +10,30 @@
     -> Maybe I just have to extend the input component to be able to deal with that sort of thing.
  */
 
+// FUNCTIONS
+
+function emptyScopusAuthor() {
+    return new ScopusAuthor(
+        '',
+        '',
+        '',
+        [],
+        [],
+        {}
+    )
+}
+
+// CLASSES
+
 function ScopusAuthor(
+    postId,                   // string
     firstName,                  // string
     lastName,                   // string
     scopusIds,                  // array of strings
     categories,                 // array of strings
     affiliations                // assoc array string -> ScopusAuthorAffiliation
 ) {
+    this.id = postId;
     this.firstName = firstName;
     this.lastName = lastName;
     this.scopusIds = scopusIds;
@@ -25,8 +42,8 @@ function ScopusAuthor(
 }
 
 function ScopusAuthorAffiliation(
-    name,                       // string
     id,                         // string
+    name,                       // string
     whitelist                   // boolean
 ) {
     this.name = name;
@@ -35,6 +52,7 @@ function ScopusAuthorAffiliation(
 }
 
 export default {
+    emptyScopusAuthor: emptyScopusAuthor,
     ScopusAuthor: ScopusAuthor,
     ScopusAuthorAffiliation: ScopusAuthorAffiliation
 }
