@@ -253,6 +253,11 @@
              *
              * Added 07.05.2020
              *
+             * Changed 08.05.2020
+             * At the end I added a new assignment for the internal "length" parameter. If this was not there it would
+             * be the bug, that the arrow key navigation would still "see" the total valid length of the object from
+             * before thus considering new elements invalid indices to move to
+             *
              * @param   {Object}  obj   The object, whose values will be used to overwrite the current values of the
              *                          internal state object "data"
              */
@@ -268,6 +273,7 @@
                         }
                     }
                 }
+                this.length = Object.keys(this.data).length;
             }
         },
         watch: {
@@ -281,6 +287,9 @@
              * Changed 07.05.2020
              * Moved the logic of the process to the method "fillData" and now just calling this
              * method here
+             *
+             * Changed 08.05.2020
+             * Had to add the additional
              *
              * @param obj
              */
