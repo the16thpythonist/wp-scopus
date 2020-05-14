@@ -73,6 +73,12 @@ function BackendWrapperMock() {
             resolve(mockCategories);
         })
     };
+
+    this.saveAuthor = function(author) {
+        return new Promise(function (resolve, reject) {
+            resolve(true);
+        })
+    }
 }
 
 
