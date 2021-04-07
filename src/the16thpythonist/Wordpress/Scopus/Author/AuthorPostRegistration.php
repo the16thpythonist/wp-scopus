@@ -397,8 +397,8 @@ class AuthorPostRegistration implements PostRegistration
         <script>
             <?php echo $parameters_code; ?>
         </script>
-        <div id="author-meta-input">
-
+        <div id="author-meta-component">
+            This section should contain the Vue frontend application...
         </div>
         <!--
         <div id="scopus-author-input">

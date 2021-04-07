@@ -5,13 +5,17 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build:lib": "vue-cli-service build --target lib --name wpscopuslib --inline-vue src/main.js",
+    "build:frontend": "vue-cli-service build --target lib --name wpscopus-frontend --inline-vue src/main.js",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "core-js": "^3.6.4",
-    "vue": "^2.6.11"
+    "axios": "^0.19.2",
+    "core-js": "^3.6.5",
+    "vue": "^2.6.11",
+    "vuex": "^3.4.0",
+    "vuex-persistedstate": "^3.0.1",
+    "gsap": "3.6.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.3.0",

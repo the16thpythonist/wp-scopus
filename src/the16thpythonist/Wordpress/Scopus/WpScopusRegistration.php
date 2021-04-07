@@ -173,7 +173,7 @@ class WpScopusRegistration
 
         wp_enqueue_style(
             'wpscopus-frontend',
-            plugin_dir_url(__FILE__) . "frontend/dist/wpscopuslib.css"
+            plugin_dir_url(__FILE__) . "frontend/dist/wpscopus-frontend.css"
         );
     }
 
@@ -201,10 +201,10 @@ class WpScopusRegistration
             true
         );
         */
-        wp_enqueue_script('vue', 'https://unpkg.com/vue');
+        // wp_enqueue_script('vue', 'https://unpkg.com/vue');
         wp_enqueue_script(
             'wpscopus-frontend',
-            plugin_dir_url(__FILE__) . 'frontend/dist/wpscopuslib.umd.js',
+            plugin_dir_url(__FILE__) . 'frontend/dist/wpscopus-frontend.umd.min.js',
             [],
             '0.0.0.0',
             true
