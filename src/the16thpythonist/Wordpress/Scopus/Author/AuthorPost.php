@@ -533,7 +533,15 @@ class AuthorPost extends PostPost
     }
 
     /**
-     * Loads an AuthorPost object based on the author ID's
+     * Loads an AuthorPost object based on the author ID's.
+     *
+     * This is a static utility function. It helps to load the actual AuthorPost object when only the ID is known, as
+     * the following example shows:
+     *
+     *    // The integer post ID is given and we want to get the actual AuthorPost object which corresponds to this
+     *    // ID. We can do that with just the knowledge of the class name.
+     *    $author_id = 10;
+     *    $author_post = AuthorPost::load($author_id);
      *
      * @since 0.0.0.0
      *

@@ -154,6 +154,8 @@
     import author from "../../lib/author";
     import backend from "../../lib/backend";
 
+    import axios from 'axios';
+
     console.log(PARAMETERS);
 
     export default {
@@ -170,9 +172,9 @@
             return {
                 categories: [],
                 affiliationOptions: ['blacklist', 'whitelist'],
-                postId: '1',
+                postId: PARAMETERS['POST_ID'],
                 author: author.emptyScopusAuthor(),
-                backend: new backend.BackendWrapperMock(),
+                backend: new backend.BackendWrapper(),
                 status: {}
             }
         },
@@ -188,6 +190,8 @@
                 let authorPromise = this.backend.getAuthor(this.postId);
                 let self = this;
                 authorPromise.then(function (author) {
+                    console.log('--- author fetched ---');
+                    console.log(author);
                     self.author = author;
                 })
             },
@@ -234,7 +238,7 @@
             }
         },
         created() {
-            console.log("I was just created");
+            console.log("=== AuthorMeta.vue component created ===");
             this.fetchCategories();
             this.fetchAuthor();
         }

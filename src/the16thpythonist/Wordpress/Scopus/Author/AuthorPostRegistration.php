@@ -107,16 +107,16 @@ class AuthorPostRegistration implements PostRegistration
         add_action('init', array($this, 'registerPostType'));
         add_action('add_meta_boxes', array($this, 'registerMetabox'));
 
+        // 24.02.2019
+        // Moved the actual ajax registration into its own method
+        $this->registerAJAX();
+
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
 
         // 10.12.2019
         // Creates a custom list view of the posts in the admin area
         $this->registerAdminListViewModification();
-
-        // 24.02.2019
-        // Moved the actual ajax registration into its own method
-        $this->registerAJAX();
     }
 
     /**
@@ -193,11 +193,21 @@ class AuthorPostRegistration implements PostRegistration
     /**
      * Registers all the methods of this instance, which are ajax callbacks with wordpress
      *
-     * CHANGELOG
-     *
-     * Added 24.02.2019
+     * @return void
      */
     function registerAJAX() {
+        // IMPORTANT INFORMATION FOR THE NEXT TIME I AM READING THIS WITHOUT REMEMBERING WORDPRESS:
+        // - Ajax hooks are registered as "normal" wordpress action hooks using the "add_action" function. What makes
+        //   them into actual ajax endpoints is the naming of the hook! You can create an ajax hook by adding
+        //   "wp_ajax" as a prefix to the action name.
+        // - To then actually call the endpoint, the request needs to contain a parameter called "action" whose
+        //   string content is the action name of defined for the hook. But (and this is important!) this should be
+        //   the name without the "wp_ajax" prefix !!
+        // - On default registering an ajax endpoint with "wp_ajax" only makes the endpoints available for logged in
+        //   users with the according privileges. So usually these are used for functionality in the admin backend
+        //   where only logged in users can enter anyways. For just a regular visitor to the site to be able to use the
+        //   endpoint one has to use the "wp_ajax_nopriv" prefix instead.
+
         // This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
         // fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
         add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
@@ -210,6 +220,10 @@ class AuthorPostRegistration implements PostRegistration
         // THis ajax method is for saving the other information about the author, such as the first name etc.
         add_action('wp_ajax_update_author_post', array($this, 'ajaxUpdateAuthorPost'));
         add_action('wp_ajax_insert_author_post', array($this, 'ajaxInsertAuthorPost'));
+
+        // This ajax method returns an author post object as JSON.
+        // - ID: It only expects the post ID (! not the author ID) to be passed as a parameter.
+        add_action('wp_ajax_get_author_post', array($this, 'ajaxGetAuthorPost'));
     }
 
     /**
@@ -415,6 +429,7 @@ class AuthorPostRegistration implements PostRegistration
      * @since 0.0.0.0
      */
     public function ajaxFetchAffiliations() {
+
         if (array_key_exists('author_id', $_GET)) {
             $author_id = $_GET['author_id'];
             echo $author_id;
@@ -488,15 +503,33 @@ class AuthorPostRegistration implements PostRegistration
         wp_die();
     }
 
+    /**
+     * Handler for the ajax action "insert_author_post". Will insert a new author post based on the values passed as
+     * arguments to the ajax request.
+     *
+     * This ajax endpoint expects the following parameters:
+     * - first_name: The string first name of the author
+     * - last_name: The string last name of the author
+     * - categories: An array with the string names for the categories to associate with the author
+     * - scopus_ids: An array with the string(s) of one or multiple scopus ids associated with this author
+     */
     public function ajaxInsertAuthorPost () {
-        $expected_args = array('first_name', 'last_name', 'categories', 'scopus_ids');
-        if (PostUtil::containsGETParameters($expected_args)) {
+        $expected_params = array('first_name', 'last_name', 'categories', 'scopus_ids');
+        if (self::ajaxRequestContains($expected_params)) {
             $args = self::insertArgs();
             AuthorPost::insert($args);
         }
     }
 
-    public function ajaxGetAuthorMeta() {
+    /**
+     * Handler for ajax action "get_author_post". Will return the author information, if given the post ID.
+     *
+     * This ajax endpoint expects the following parameters:
+     * - ID: The post ID for which to return the detailed author informations
+     *
+     * @return void
+     */
+    public function ajaxGetAuthorPost() {
         // This is a function which is expected to exist by the frontend. It is supposed to return the fundamental JSON
         // data which describes the author post meta that is introduced by the wp-scopus package. This data includes:
         // - wordpress post ID
@@ -506,12 +539,26 @@ class AuthorPostRegistration implements PostRegistration
         // - list of the tags associated with the author
         // - list of affiliations associated with the author (although, I am not sure if that should happen here or
         //   in a separate method ?)
-        $expected_args = array('ID');
-        if (PostUtil::containsGETParameters($expected_args)) {
-            $post_id = $_GET['ID'];
 
+        $expected_params = array('ID');
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+            $post_id = $params['ID'];
 
+            // ~ loading the actual author post object and formatting the JSON return
+            $author_post = new AuthorPost($post_id);
+            $response_data = [
+                'post_id'           => $author_post->post_id,
+                'first_name'        => $author_post->first_name,
+                'last_name'         => $author_post->last_name,
+                'scopus_ids'        => $author_post->scopus_ids,
+                'categories'         => $author_post->categories
+            ];
+
+            echo json_encode($response_data);
         }
+
+        wp_die();
     }
 
     // INSERT THE NECESSARY AJAX
@@ -604,22 +651,68 @@ class AuthorPostRegistration implements PostRegistration
 
     /**
      * This method computes an array with the format needed to call the AuthorPost::insert method from the values in
-     * the _GET array. This method should only be called in the corresponding ajax callbacks and after validating that
-     * the response contains all these values.
+     * the _REQUEST array. This method should only be called in the corresponding ajax callbacks and after validating
+     * that the response contains all these values.
      *
-     * CHANGELOG
+     * The following example is assumed to be during the handling of an ajax request (which means that $_REQUEST
+     * actually contains values). We will assume that the objective is to create a new author post within the database
+     * based on the values passed with the ajax request:
      *
-     * Added 24.02.2019
+     *    // Within an ajax handler which is a method of AuthorPostRegistration...
+     *    $insert_args = self::createInsertArgs();
+     *    $author_post = AuthorPost::insert($insert_args);
      *
      * @return array
      */
-    public static function insertArgs() {
+    public static function createInsertArgs() {
         $args = array(
-            'first_name'        => $_GET['first_name'],
-            'last_name'         => $_GET['last_name'],
-            'scopus_ids'        => str_getcsv($_GET['scopus_ids']),
-            'categories'        => str_getcsv($_GET['categories'])
+            'first_name'        => $_REQUEST['first_name'],
+            'last_name'         => $_REQUEST['last_name'],
+            'scopus_ids'        => str_getcsv($_REQUEST['scopus_ids']),
+            'categories'        => str_getcsv($_REQUEST['categories'])
         );
         return $args;
     }
-}
+
+    // -- Ajax helper methods --
+    // Interesting insight: You can send wordpress ajax requests as GET requests or as POST requests. In the case of
+    // get requests the parameters have to be URL parameters and for post requests the params have to be form data.
+    // I thought that for get requests you would have to get the params from the $_GET global array and for post
+    // requests consequently from the $_POST array. And that is the case, in a sense, because for get requests the
+    // $_POST array is empty and vice versa. But interestingly for both cases you can just get it from the global
+    // $_REQUEST array. There the same parameters will be regardless of whether it is post or get.
+    // That is exactly what those two helper methods are doing.
+
+    /**
+     * Returns whether or not the current ajax request contains all parameters defines by the strings in $args.
+     *
+     * @param array $args A list of strings, where each string defines the name of one parameter which is expected to
+     *      be found within the ajax request.
+     * @return bool
+     */
+    public static function ajaxRequestContains(array $args) {
+        foreach ($args as $arg) {
+            if (!array_key_exists($arg, $_REQUEST)) {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+
+    /**
+     * Returns an assoc array with the keys being the string names in $args and the values the corresponding values
+     * extracted from the ajax request body.
+     *
+     * @param array $args An array of strings where each string defines the name of one parameter to be extracted
+     *      from the current ajax request.
+     * @return array
+     */
+    public static function ajaxRequestParameters(array $args) {
+        $values = [];
+        foreach ($args as $arg) {
+            $values[$arg] = $_REQUEST[$arg];
+        }
+
+        return $values;
+    }
+ }

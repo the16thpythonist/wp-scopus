@@ -1,4 +1,6 @@
-import author from "./author";
+/* eslint-disable */
+import axios from 'axios';
+import author from './author';
 
 function Ajax() {
 
@@ -19,8 +21,46 @@ function Ajax() {
 
 function BackendWrapper() {
 
-    this.getAuthor = function (authorID) {
+    const AJAX_URL = ajaxURL();
 
+    const mockCategories = [
+        'Science',
+        'Biology',
+        'Nanotechnology',
+        'Physics',
+        'Chemistry',
+        'Astronomy',
+        'Computer Science'
+    ];
+
+    this.ajaxRequest = function(action, parameters) {
+        let formData = new FormData();
+        formData.append('action', action)
+        for (const [key, value] of Object.entries(parameters)) {
+            formData.append(key, value);
+        }
+        return axios.post(AJAX_URL, formData).then(function (response) {
+            return response.data;
+        });
+    }
+
+
+    this.getAuthor = function (postID) {
+        return this.ajaxRequest('get_author_post', {'ID': postID});
+    }
+
+    // Still mock!
+
+    this.getCategories = function () {
+        return new Promise(function (resolve, reject) {
+            resolve(mockCategories);
+        })
+    };
+
+    this.saveAuthor = function(author) {
+        return new Promise(function (resolve, reject) {
+            resolve(true);
+        })
     }
 }
 

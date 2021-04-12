@@ -1,3 +1,4 @@
+/* eslint-disable */
 /*
     So here are some thoughts about how this thing is supposed to work:
     We have a ScopusAuthor object and then in theory we should be able to make this a data property of a
