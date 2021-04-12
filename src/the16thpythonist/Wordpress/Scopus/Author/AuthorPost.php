@@ -533,11 +533,7 @@ class AuthorPost extends PostPost
     }
 
     /**
-     * Loads an AuthorPost object based on the author ID
-     *
-     * CHANGELOG
-     *
-     * Added 31.08.2018
+     * Loads an AuthorPost object based on the author ID's
      *
      * @since 0.0.0.0
      *

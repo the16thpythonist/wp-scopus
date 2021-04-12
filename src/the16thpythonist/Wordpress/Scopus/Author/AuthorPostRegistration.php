@@ -390,27 +390,14 @@ class AuthorPostRegistration implements PostRegistration
         );
         $parameters_code = PostUtil::javascriptExposeObject('PARAMETERS', $parameters);
         ?>
-        <!--
-        Changed 24.02.2019
-        Replaced the php template version with the new vue component for the input of author info
-        -->
+
         <script>
             <?php echo $parameters_code; ?>
         </script>
+
         <div id="author-meta-component">
             This section should contain the Vue frontend application...
         </div>
-        <!--
-        <div id="scopus-author-input">
-            <author-input></author-input>
-        </div>
-        -->
-
-        <!--
-        Changed 11.10.2019
-        Removed the whole custom JS code for the affiliation config, as all of that has been refactored into a VueJS
-        component, which is part of the 'author-input' component.
-        -->
         <?php
     }
 
@@ -508,6 +495,26 @@ class AuthorPostRegistration implements PostRegistration
             AuthorPost::insert($args);
         }
     }
+
+    public function ajaxGetAuthorMeta() {
+        // This is a function which is expected to exist by the frontend. It is supposed to return the fundamental JSON
+        // data which describes the author post meta that is introduced by the wp-scopus package. This data includes:
+        // - wordpress post ID
+        // - first name
+        // - last name
+        // - list of all author scopus ID's (as strings)
+        // - list of the tags associated with the author
+        // - list of affiliations associated with the author (although, I am not sure if that should happen here or
+        //   in a separate method ?)
+        $expected_args = array('ID');
+        if (PostUtil::containsGETParameters($expected_args)) {
+            $post_id = $_GET['ID'];
+
+
+        }
+    }
+
+    // INSERT THE NECESSARY AJAX
 
     // **********************
     // MODIFY ADMIN LIST VIEW

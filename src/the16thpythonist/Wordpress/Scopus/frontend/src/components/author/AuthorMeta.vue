@@ -143,6 +143,7 @@
 </template>
 
 <script>
+    /* eslint-disable */
     import DescribedTextInput from "../inputs/DescribedTextInput";
     import ArrayTextInput from "../inputs/ArrayTextInput";
     import ArraySelectInput from "../inputs/ArraySelectInput";
@@ -152,6 +153,8 @@
 
     import author from "../../lib/author";
     import backend from "../../lib/backend";
+
+    console.log(PARAMETERS);
 
     export default {
         name: "AuthorMeta",
