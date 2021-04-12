@@ -190,9 +190,9 @@
                 let authorPromise = this.backend.getAuthor(this.postId);
                 let self = this;
                 authorPromise.then(function (author) {
-                    console.log('--- author fetched ---');
-                    console.log(author);
                     self.author = author;
+                    console.log(self.author);
+                    self.$forceUpdate();
                 })
             },
             onInput: function () {

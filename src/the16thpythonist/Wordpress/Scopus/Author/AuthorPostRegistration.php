@@ -487,18 +487,31 @@ class AuthorPostRegistration implements PostRegistration
     }
 
     /**
-     * Ajax callback, which will update the AuthorPost object for which the ID was passed.
+     * Handler for the ajax action "update_author_post". Will update the author post specified by the ajax parameters
+     * with the values which also have to be contained within the ajax params.
      *
-     * CHANGELOG
+     * This ajax endpoint expects the following parameters:
+     * - ID: The string post ID of the post, which is to be updated
+     * - first_name: The string first name of the author
+     * - last_name: The string last name of the author
+     * - categories: An array with the string names for the categories to associate with the author
+     * - scopus_ids: An array with the string(s) of one or multiple scopus ids associated with this author
      *
-     * Added 26.02.2019
+     * @return void
      */
     public function ajaxUpdateAuthorPost() {
-        $expected_args = array('ID', 'first_name', 'last_name', 'categories', 'scopus_ids');
-        if (PostUtil::containsGETParameters($expected_args)) {
-            $post_id = $_GET['ID'];
-            $args = self::insertArgs();
+        $params_args = array('ID', 'first_name', 'last_name', 'categories', 'scopus_ids');
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+
+            $post_id = $params['ID'];
+            // "createInsertArgs" will use the values from the ajax request ($_REQUEST) to create an array which can
+            // be directly passed to the "insert" method of the author post class.
+            // -> The "update" and "insert" method expect the same values for the "args" array.
+            $args = self::createInsertArgs();
             AuthorPost::update($post_id, $args);
+
+            echo json_encode(true);
         }
         wp_die();
     }
@@ -512,12 +525,18 @@ class AuthorPostRegistration implements PostRegistration
      * - last_name: The string last name of the author
      * - categories: An array with the string names for the categories to associate with the author
      * - scopus_ids: An array with the string(s) of one or multiple scopus ids associated with this author
+     *
+     * @return void
      */
     public function ajaxInsertAuthorPost () {
         $expected_params = array('first_name', 'last_name', 'categories', 'scopus_ids');
         if (self::ajaxRequestContains($expected_params)) {
-            $args = self::insertArgs();
+            // "createInsertArgs" will use the values from the ajax request ($_REQUEST) to create an array which can
+            // be directly passed to the "insert" method of the author post class.
+            $args = self::createInsertArgs();
             AuthorPost::insert($args);
+
+            echo json_encode(true);
         }
     }
 
@@ -545,17 +564,26 @@ class AuthorPostRegistration implements PostRegistration
             $params = self::ajaxRequestParameters($expected_params);
             $post_id = $params['ID'];
 
-            // ~ loading the actual author post object and formatting the JSON return
-            $author_post = new AuthorPost($post_id);
-            $response_data = [
-                'post_id'           => $author_post->post_id,
-                'first_name'        => $author_post->first_name,
-                'last_name'         => $author_post->last_name,
-                'scopus_ids'        => $author_post->scopus_ids,
-                'categories'         => $author_post->categories
-            ];
+            try{
+                // ~ loading the actual author post object and formatting the JSON return
+                $author_post = new AuthorPost($post_id);
+                $response_data = [
+                    'post_id'           => $author_post->post_id,
+                    'first_name'        => $author_post->first_name,
+                    'last_name'         => $author_post->last_name,
+                    'scopus_ids'        => $author_post->author_ids,
+                    'categories'         => $author_post->categories
+                ];
 
-            echo json_encode($response_data);
+                wp_send_json($response_data);
+
+            } catch (Exception $e){
+
+                wp_send_json_error('There was an error with getting the AuthorPost', 500);
+            }
+
+        } else {
+            wp_send_json_error('The AJAX request does not contain the ID parameter for the post ID', 500);
         }
 
         wp_die();

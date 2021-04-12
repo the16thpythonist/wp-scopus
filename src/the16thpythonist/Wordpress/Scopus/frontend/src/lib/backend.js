@@ -44,6 +44,15 @@ function BackendWrapper() {
         });
     }
 
+    this.saveAuthor = function(author) {
+        return this.ajaxRequest('update_author_post', {
+            'ID': author.postId,
+            'first_name': author.firstName,
+            'last_name': author.lastName,
+            'categories': author.categories,
+            'scopus_ids': author.scopusIds
+        });
+    }
 
     this.getAuthor = function (postID) {
         return this.ajaxRequest('get_author_post', {'ID': postID});
@@ -56,12 +65,6 @@ function BackendWrapper() {
             resolve(mockCategories);
         })
     };
-
-    this.saveAuthor = function(author) {
-        return new Promise(function (resolve, reject) {
-            resolve(true);
-        })
-    }
 }
 
 

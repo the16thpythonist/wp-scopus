@@ -34,6 +34,7 @@
 </template>
 
 <script>
+    /* eslint-disable */
     export default {
         name: "ArrayTextInput",
         props: {
