@@ -8,7 +8,7 @@
                 {{ label }}
             </span>
             <div class="heading-options">
-                <span v-for="option in options">
+                <span v-for="option in options" :key="option">
                     {{ option }}
                 </span>
             </div>
@@ -24,7 +24,6 @@
                     class="row-options"
                     :value="get(key)"
                     @input="set(key, $event)"
-                    @input="onInput"
                     :options="options"
                     :ref="index"
                     @keyup.up.prevent="moveUp(index)"
@@ -35,14 +34,8 @@
 </template>
 
 <script>
+    /* eslint-disable */
     import RadioGroup from "./RadioGroup";
-
-    /*
-        Ok so the idea is to give this component optional properties "nameFunc" and "assignFunc", which control
-        how to generate the name for a row and how to assign the selected data to the given object structure
-        respectively.
-     */
-
 
     export default {
         name: "ObjectRadioSelect",
@@ -129,6 +122,7 @@
              */
             set: function(key, value) {
                 this.setFunc(this, this.data, key, value);
+                this.emitInput();
             },
             /**
              * Gets called, whenever one of the radio group input elements changes

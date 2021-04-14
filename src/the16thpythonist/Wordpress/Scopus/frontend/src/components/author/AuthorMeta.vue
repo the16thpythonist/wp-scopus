@@ -21,6 +21,7 @@
 
         <DescribedTextInput
                 class="text-input"
+                ref="first_name_input"
                 v-model="author.firstName"
                 id="author-first-name"
                 placeholder="Maximilian"
@@ -113,6 +114,12 @@
             whitelisted or blacklisted (to be excluded).
         </p>
 
+        <button
+                type="button"
+                @click.prevent="onAffiliationFetch">
+            Fetch affiliations
+        </button>
+
         <ObjectRadioSelect
                 class="object-radio-select"
                 v-model="author.affiliations"
@@ -133,6 +140,7 @@
         <StatusDiv class="status-modified"
                 :value="status">
         </StatusDiv>
+
         <button
                 type="button"
                 class="save"
@@ -156,8 +164,6 @@
 
     import axios from 'axios';
 
-    console.log(PARAMETERS);
-
     export default {
         name: "AuthorMeta",
         components: {
@@ -172,10 +178,11 @@
             return {
                 categories: [],
                 affiliationOptions: ['blacklist', 'whitelist'],
-                postId: PARAMETERS['POST_ID'],
+                postId: POST_ID,
                 author: author.emptyScopusAuthor(),
                 backend: new backend.BackendWrapper(),
-                status: {}
+                status: {},
+                debug: false
             }
         },
         methods: {
@@ -190,24 +197,61 @@
                 let authorPromise = this.backend.getAuthor(this.postId);
                 let self = this;
                 authorPromise.then(function (author) {
-                    self.author = author;
-                    console.log(self.author);
+                    // So this section needs some explaining, because it is rather unintuitive.
+                    // So basibally what we want to achieve here: As soon as we have received the new author
+                    // information from the backend, we want to update the local author saved within the component.
+                    // The obvious way to do this would be:
+                    // self.author = author
+                    // But this wont work! Or at least it will cause the component to crash. Because for the component
+                    // we have defined several attributes of author (such as author.catgories) for example as
+                    // v-bindings for child components. Internally these attributes now have observers attached to them
+                    // If we just replace the entire author, then the new object does not have these observers! So by
+                    // replacing only each attribute of the author object within the loop and with the special $set
+                    // method we can swap the values without destroying the observers!
+                    for (const [key, value] of Object.entries(author)) {
+                        self.$set(self.author, key, value);
+                    }
                     self.$forceUpdate();
+
+                    self.log('-- fetched author --');
+                    self.log(self.author);
+
+                    let authorAffiliationsPromise = self.backend.getAuthorAffiliations(self.author);
+                    authorAffiliationsPromise.then(function (affiliations) {
+                        self.$set(self.author, 'affiliations', affiliations);
+                        self.$forceUpdate();
+                    });
                 })
             },
             onInput: function () {
                 this.setStatusModified();
             },
             onSave: function () {
+                this.log('-- saving author -- ');
+                this.log(this.author);
+
                 let savePromise = this.backend.saveAuthor(this.author);
                 let self = this;
                 savePromise.then(function (value) {
-                    console.log('Sucessfully saved');
+                    self.log('(+) Sucessfully saved!');
                     self.setStatusSaved();
                 }).catch(function (message) {
-                    console.log('Saving failed');
+                    self.log('(-) Saving failed!');
                     self.setStatusError(message)
                 });
+            },
+            onAffiliationFetch: function () {
+                this.log('-- starting affiliation gather --');
+                for (let authorId of this.author.scopusIds) {
+                    let requestPromise = this.backend.ajaxRequest('fetch_author_affiliations', {'author_id': authorId});
+                    let self = this;
+
+                    requestPromise.then(function (data) {
+                        self.log(data);
+                    }).catch(function (error) {
+                        self.log(error);
+                    })
+                }
             },
             createAffiliationLabel: function (obj, key) {
                 return `${obj[key].name} (${obj[key].id})`;
@@ -235,10 +279,15 @@
                     'type': 'error',
                     'message': `There was an error while saving! "${message}"`
                 }
+            },
+            log: function(msg) {
+                if (this.debug) {
+                    console.log(msg);
+                }
             }
         },
         created() {
-            console.log("=== AuthorMeta.vue component created ===");
+            this.log("=== AuthorMeta.vue component created ===");
             this.fetchCategories();
             this.fetchAuthor();
         }

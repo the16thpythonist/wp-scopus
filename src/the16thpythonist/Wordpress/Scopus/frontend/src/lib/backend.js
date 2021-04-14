@@ -44,18 +44,76 @@ function BackendWrapper() {
         });
     }
 
-    this.saveAuthor = function(author) {
-        return this.ajaxRequest('update_author_post', {
-            'ID': author.postId,
-            'first_name': author.firstName,
-            'last_name': author.lastName,
-            'categories': author.categories,
-            'scopus_ids': author.scopusIds
+    this.saveAuthor = function(_author) {
+        this.ajaxRequest('update_author_post', {
+            'ID': _author.id,
+            'first_name': _author.firstName,
+            'last_name': _author.lastName,
+            'categories': _author.categories,
+            'scopus_ids': _author.scopusIds
+        });
+
+        let whitelist = [];
+        let blacklist = [];
+        for (let affiliation of Object.values(_author.affiliations)) {
+            if (affiliation.whitelist) {
+                whitelist.push(affiliation.id);
+            } else {
+                blacklist.push(affiliation.id);
+            }
+        }
+
+        return this.ajaxRequest('update_author_affiliations', {
+            'ID': _author.id,
+            'whitelist': whitelist,
+            'blacklist': blacklist
         });
     }
 
     this.getAuthor = function (postID) {
-        return this.ajaxRequest('get_author_post', {'ID': postID});
+        return this.ajaxRequest('get_author_post', {'ID': postID}).then(function (data) {
+            return new author.ScopusAuthor(
+                data['post_id'],
+                data['first_name'],
+                data['last_name'],
+                data['scopus_ids'],
+                data['categories'],
+                {}
+            );
+        });
+    }
+
+    this.getAuthorAffiliations = function(_author) {
+        let promises = [];
+        for (let authorId of _author.scopusIds) {
+            let fileName = `affiliations_author_${authorId}.json`;
+            let promise = this.getFile(fileName);
+            promises.push(promise);
+        }
+
+        return Promise.all(promises).then(function (files) {
+            let affiliations = {};
+            for (let file of files) {
+                for (const [affiliationId, affiliationData] of Object.entries(file)) {
+                    let affiliation = new author.ScopusAuthorAffiliation(
+                        affiliationId,
+                        affiliationData.name,
+                        affiliationData.whitelist
+                    )
+                    affiliations[affiliationId] = affiliation;
+                }
+            }
+
+            return affiliations;
+        });
+    }
+
+    this.getFile = function(fileName) {
+        return this.ajaxRequest('read_data_file', {'filename': fileName}).then(function (data){
+            // console.log(`${fileName} content:`);
+            // console.log(data);
+            return data;
+        })
     }
 
     // Still mock!

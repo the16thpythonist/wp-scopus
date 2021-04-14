@@ -126,6 +126,7 @@ class AuthorPost extends PostPost
 
         $this->first_name = PostUtil::loadSinglePostMeta($this->post_id, 'first_name', '');
         $this->last_name = PostUtil::loadSinglePostMeta($this->post_id, 'last_name', '');
+
         $this->author_ids = PostUtil::loadSinglePostMeta($this->post_id, 'scopus_author_id', array());
         $this->categories = PostUtil::loadSinglePostMeta($this->post_id, 'categories', array());
         $this->scopus_blacklist = PostUtil::loadSinglePostMeta($this->post_id, 'scopus_blacklist', array());

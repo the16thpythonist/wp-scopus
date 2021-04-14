@@ -210,11 +210,11 @@ class AuthorPostRegistration implements PostRegistration
 
         // This AJAX method is used to trigger the process of fetching an authors affiliations. The results of this
         // fetch will be saved in a temp. DataPost, from where they can be accessed by the frontend.
-        add_action('wp_ajax_scopus_author_fetch_affiliations', array($this, 'ajaxFetchAffiliations'));
+        add_action('wp_ajax_fetch_author_affiliations', array($this, 'ajaxFetchAuthorAffiliations'));
 
         // 02.01.2019
         // This AJAX method will save the blacklist/whitelist configuration to the Post meta
-        add_action('wp_ajax_scopus_author_store_affiliations', array($this, 'ajaxSaveAffiliations'));
+        add_action('wp_ajax_update_author_affiliations', array($this, 'ajaxUpdateAuthorAffiliations'));
 
         // 24.02.2019
         // THis ajax method is for saving the other information about the author, such as the first name etc.
@@ -252,6 +252,7 @@ class AuthorPostRegistration implements PostRegistration
          * This method will be hooked into the wordpress hook 'save_post', which means that it will get called for
          * every post, regardless of the post type. So it is the callbacks responsibility to filter out the correct
          * post type to address.
+         *
          * The function for 'save_post' will be called as the response to the html POST, that is being triggered, once
          * the button has been pressed on the post edit page, which means the $_POST array contains all the relevant
          * information of the post.
@@ -298,6 +299,7 @@ class AuthorPostRegistration implements PostRegistration
 
             if (self::$META_SINGLE[$key] === true) {
                 $value = $_POST[$key];
+                update_post_meta($post_id, $key, $value);
             } else {
                 /*
                  * If the value is not single, which means it is multiple and represented by a textarea. Multiple values
@@ -305,13 +307,16 @@ class AuthorPostRegistration implements PostRegistration
                  * being converted into a csv string.
                  */
 
-                $value = str_replace(self::PHP_NEWLINE, ',', $_POST[$key]);
+                // $value = str_replace(self::PHP_NEWLINE, ',', $_POST[$key]);
+                $value = $_POST[$key];
+                foreach ($_POST[$key] as $value) {
+                    update_post_meta($post_id, $key, $value);
+                }
             }
-            update_post_meta($post_id, $key, $value);
-
         }
 
         /*
+         * ~ CREATING CUSTOM TITLE
          * The save hook callback is also the correct place to possibly overwrite standard wordpress attributes,
          * written during a save, such as the body, time or title.
          * The Author post type doesnt support a custom title. The title is supposed to be a combination of the strings
@@ -324,21 +329,26 @@ class AuthorPostRegistration implements PostRegistration
             // The title will be the last name first and then the given name, separated by a comma
             $title = $last_name . ', ' . $first_name;
             $where = array('ID' => $post_id);
+            // At this point in the pipeline, the title can sadly only be modified in this slightly "hacky" way by
+            // actually making a database query with the global wpdb reference.
             $wpdb->update($wpdb->posts, array('post_title' => $title), $where);
         }
     }
 
     /**
-     * CHANGELOG
+     * Registers the additional metabox for the author post type by using the wp function "add_meta_box"
      *
-     * Added 29.08.2018
+     * This function should be called together with all other registration functions!
      *
-     * @since 0.0.0.0
+     * @return void
      */
     public function registerMetabox() {
         add_meta_box(
             $this->post_type . '-meta',
+            // This string will be the title of the metabox displayed within the browser:
             'Author Meta Information',
+            // This is the callback which defines the contents of the meta box. This function accpets a WP_Post object
+            // and is supposed to render the according HTML content in turn.
             array($this, 'callbackMetabox'),
             $this->post_type,
             'normal',
@@ -347,68 +357,24 @@ class AuthorPostRegistration implements PostRegistration
     }
 
     /**
-     * Echos the all the necessary HTML code to appear inside the custom metabox
+     * Echos the HTML code for the additional MetaBox within the edit page for the author post type.
      *
-     * CHANGELOG
+     * This function is not intended to be actually called somewhere. It will be registered as a callback function
+     * for the wordpress command "add_meta_box". These kind of callbacks do not have to return anything, instead they
+     * have to echo the necessary html.
      *
-     * Added 29.08.2018
-     *
-     * Changed 30.08.2018
-     * Added text paragraphs to the metabox, which describe, what has to be done/what happens in the specific sections
-     *
-     * Changed 11.10.2019
-     * Removed the whole custom JS which has handled the affiliation config. The functionality has been refactored into
-     * a VueJS component, which is part of the 'author-input' master component.
-     *
-     * @since 0.0.0.0
+     * The frontend code of this metabox actually consits of a VueJS component. That's why this method is so short.
+     * It only provided the anchor for the component. When the frontend code is loaded Vue will latch onto this
+     * special anchor element and render the component dynamically from the JS.
      *
      * @param \WP_Post $post
+     *
+     * @return  void
      */
     public function callbackMetabox(\WP_Post $post) {
         $post_id = $post->ID;
-        /*
-         * Within the author post there is metabox being used to input the meta data about the author, such as the
-         * name, affiliation etc.
-         *
-         */
-        $meta = array();
-        foreach (self::$META_FIELDS as $key => $label) {
-            $value = '';
-            if (metadata_exists('post', $post_id, $key)) {
-                $value = get_post_meta($post_id, $key, true);
-            }
-
-            if (self::$META_SINGLE[$key] === true) {
-                $type = 'text';
-            } else {
-                $type = 'textarea';
-            }
-
-            $meta[$key] = array(
-                'value'     => $value,
-                'label'     => $label,
-                'type'      => $type
-            );
-        }
-        $post = new AuthorPost($post_id);
-
-        // Here we are getting the list of all the scopus ids for the author post
-        $parameters = array(
-            'POST_ID'           => $post->ID,
-            'FIRST_NAME'        => $post->first_name,
-            'LAST_NAME'         => $post->last_name,
-            'AUTHOR_IDS'        => $post->author_ids,
-            'CATEGORY_OPTIONS'  => ScopusOptions::getAuthorCategories(),
-            'CATEGORIES'        => $post->categories,
-            'ADMIN_URL'         => admin_url()
-        );
-        $parameters_code = PostUtil::javascriptExposeObject('PARAMETERS', $parameters);
         ?>
-
-        <script>
-            <?php echo $parameters_code; ?>
-        </script>
-
+        <script> var POST_ID = <?php echo $post_id; ?>; </script>
         <div id="author-meta-component">
             This section should contain the Vue frontend application...
         </div>
@@ -422,23 +388,25 @@ class AuthorPostRegistration implements PostRegistration
     /**
      * The ajax method, which is called to start the process of fetching the author affiliations.
      *
-     * CHANGELOG
-     *
-     * Added 31.08.2018
-     *
-     * @since 0.0.0.0
+     * @return void
      */
-    public function ajaxFetchAffiliations() {
+    public function ajaxFetchAuthorAffiliations() {
 
-        if (array_key_exists('author_id', $_GET)) {
-            $author_id = $_GET['author_id'];
-            echo $author_id;
+        $expected_params = ['author_id'];
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+            $author_id = $params['author_id'];
+
             try {
                 $fetcher = new AuthorAffiliationFetcher();
                 $fetcher->set($author_id);
-                var_export($fetcher->fetchAffiliations());
+                $fetcher->fetchAffiliations();
+
+                wp_send_json(true);
+
             } catch (Exception $e) {
-                echo $e->getMessage();
+
+                wp_send_json_error($e->getMessage, 501);
             }
         }
         wp_die();
@@ -447,43 +415,43 @@ class AuthorPostRegistration implements PostRegistration
     /**
      * The ajax method, which will save the blacklist and the whitelist (passed as URL parameters) to the AuthorPost
      *
-     * CHANGELOG
-     *
-     * Added 02.01.2019
-     *
-     * Changed 11.10.2019
-     * The whitelist and blacklist meta value were previously saved as comma separated strings, but since there has
-     * been a change within the author post model, they are now saved directly as arrays.
+     * @return void
      */
-    public function ajaxSaveAffiliations() {
+    public function ajaxUpdateAuthorAffiliations() {
 
-        try {
-            $whitelist = $_GET['whitelist'];
-            $blacklist = $_GET['blacklist'];
-            $post_id = $_GET['post_id'];
+        $expected_params = ['whitelist', 'blacklist', 'ID'];
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+            try {
+                $whitelist = str_getcsv($params['whitelist']);
+                $blacklist = str_getcsv($params['blacklist']);
+                $post_id = $params['ID'];
 
-            // Here we actually insert the date as meta values to the corresponding author post.
-            // 11.10.2019
-            // The lists are now being saved as arrays instead of comma separated lists.
-            update_post_meta($post_id, 'scopus_whitelist', $whitelist);
-            update_post_meta($post_id, 'scopus_blacklist', $blacklist);
+                // Here we actually insert the date as meta values to the corresponding author post.
+                // 11.10.2019
+                // The lists are now being saved as arrays instead of comma separated lists.
+                update_post_meta($post_id, 'scopus_whitelist', $whitelist);
+                update_post_meta($post_id, 'scopus_blacklist', $blacklist);
 
-            $author_post = new AuthorPost($post_id);
+                $author_post = new AuthorPost($post_id);
 
-            // Why this is necessary is a little bit more complicated. The front end display of the affiliations and
-            // the checkboxes is based on a temporary DataPost. With this we issue the affiliation fetcher to update
-            // the blacklist and whitelist values within this DataPost according to how they are in the actual
-            // AuthorPost. If we didnt do this, the changes would indeed be saved, but not visible in the front end.
-            $fetcher = new AuthorAffiliationFetcher();
-            foreach ($author_post->author_ids as $author_id) {
-                $fetcher->set($author_id);
-                $fetcher->updateAffiliations();
+                // Why this is necessary is a little bit more complicated. The front end display of the affiliations and
+                // the checkboxes is based on a temporary DataPost. With this we issue the affiliation fetcher to update
+                // the blacklist and whitelist values within this DataPost according to how they are in the actual
+                // AuthorPost. If we didnt do this, the changes would indeed be saved, but not visible in the front end.
+                $fetcher = new AuthorAffiliationFetcher();
+                foreach ($author_post->author_ids as $author_id) {
+                    $fetcher->set($author_id);
+                    $fetcher->updateAffiliations();
+                }
+
+                wp_send_json(true);
+
+            } catch (Exception $e) {
+                wp_send_json_error($e->getMessage(), 501);
             }
-        } catch (Exception $e) {
-            echo $e->getMessage();
-        } finally {
-            wp_die();
         }
+        wp_die();
     }
 
     /**
@@ -500,18 +468,23 @@ class AuthorPostRegistration implements PostRegistration
      * @return void
      */
     public function ajaxUpdateAuthorPost() {
-        $params_args = array('ID', 'first_name', 'last_name', 'categories', 'scopus_ids');
+        $expected_params = ['ID', 'first_name', 'last_name', 'categories', 'scopus_ids'];
         if (self::ajaxRequestContains($expected_params)) {
-            $params = self::ajaxRequestParameters($expected_params);
+            try {
+                $params = self::ajaxRequestParameters($expected_params);
 
-            $post_id = $params['ID'];
-            // "createInsertArgs" will use the values from the ajax request ($_REQUEST) to create an array which can
-            // be directly passed to the "insert" method of the author post class.
-            // -> The "update" and "insert" method expect the same values for the "args" array.
-            $args = self::createInsertArgs();
-            AuthorPost::update($post_id, $args);
+                $post_id = $params['ID'];
+                // "createInsertArgs" will use the values from the ajax request ($_REQUEST) to create an array which can
+                // be directly passed to the "insert" method of the author post class.
+                // -> The "update" and "insert" method expect the same values for the "args" array.
+                $args = self::createInsertArgs();
+                AuthorPost::update($post_id, $args);
 
-            echo json_encode(true);
+                wp_send_json(true);
+            } catch (Exception $e) {
+
+                wp_send_json_error('There was an error updating the author post', 500);
+            }
         }
         wp_die();
     }
@@ -572,7 +545,7 @@ class AuthorPostRegistration implements PostRegistration
                     'first_name'        => $author_post->first_name,
                     'last_name'         => $author_post->last_name,
                     'scopus_ids'        => $author_post->author_ids,
-                    'categories'         => $author_post->categories
+                    'categories'        => $author_post->categories,
                 ];
 
                 wp_send_json($response_data);
@@ -696,6 +669,8 @@ class AuthorPostRegistration implements PostRegistration
         $args = array(
             'first_name'        => $_REQUEST['first_name'],
             'last_name'         => $_REQUEST['last_name'],
+            //'scopus_ids'        => $_REQUEST['scopus_ids'],
+            //'categories'        => $_REQUEST['categories']
             'scopus_ids'        => str_getcsv($_REQUEST['scopus_ids']),
             'categories'        => str_getcsv($_REQUEST['categories'])
         );
