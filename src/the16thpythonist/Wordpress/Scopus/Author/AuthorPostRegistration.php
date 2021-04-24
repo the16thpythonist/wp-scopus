@@ -288,8 +288,8 @@ class AuthorPostRegistration implements PostRegistration
                 $blacklist[] = $affiliation_id;
             }
         }
-        update_post_meta($post_id, 'scopus_whitelist', implode(',', $whitelist));
-        update_post_meta($post_id, 'scopus_blacklist', implode(',', $blacklist));
+        //update_post_meta($post_id, 'scopus_whitelist', implode(',', $whitelist));
+        //update_post_meta($post_id, 'scopus_blacklist', implode(',', $blacklist));
 
         /*
          * All the "normal" text input fields, just directly contain, whatever was written into them as the value to
@@ -373,6 +373,7 @@ class AuthorPostRegistration implements PostRegistration
      */
     public function callbackMetabox(\WP_Post $post) {
         $post_id = $post->ID;
+        $author_post = new AuthorPost($post_id);
         ?>
         <script> var POST_ID = <?php echo $post_id; ?>; </script>
         <div id="author-meta-component">

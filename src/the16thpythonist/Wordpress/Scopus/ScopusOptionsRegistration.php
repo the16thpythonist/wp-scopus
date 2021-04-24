@@ -13,9 +13,6 @@ use the16thpythonist\Wordpress\Functions\PostUtil;
 /**
  * Class ScopusOptionsRegistration
  *
- * CHANGELOG
- *
- * Created 30.01.2019
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
@@ -104,14 +101,14 @@ class ScopusOptionsRegistration
     }
 
     /**
-     * Registers all the ajax functions with wordpress
+     * Registers all ajax endpoints, which are important for the options page
      *
-     * CHANGELOG
-     *
-     * Added 12.02.2019
+     * @return void
      */
     public function registerAjax() {
-        add_action('wp_ajax_save_scopus_options', array($this, 'ajaxSaveOptions'));
+        //add_action('wp_ajax_save_scopus_options', array($this, 'ajaxSaveOptions'));
+        add_action('wp_ajax_get_scopuswp_options', [$this, 'ajaxGetScopuswpOptions']);
+        add_action('wp_ajax_update_scopuswp_options', [$this, 'ajaxUpdateScopuswpOptions']);
     }
 
     // ************************
@@ -174,12 +171,9 @@ class ScopusOptionsRegistration
     /**
      * Echos the actual html code needed to display the options page.
      *
-     * CHANGELOG
      *
-     * Added 11.02.2019
      *
-     * Changed 24.02.2019
-     * Added the author categories to also be passed to the front end
+     * @return void
      */
     public function display() {
         // Ok apparently here I need to check for the _POST array to contain the new options in case the
@@ -200,8 +194,7 @@ class ScopusOptionsRegistration
         $author_categories = $this->getAuthorCategories();
         $author_categories_code = PostUtil::javascriptExposeObject('CATEGORIES', $author_categories);
         ?>
-        <h2>ScopusWp Settings</h2>
-        <div class="wrap">
+        <div class="scopus-options-wrapper">
             <!-- This script contains dynamically created JS code, that passes values to the VUE application -->
             <script>
                 <?php
@@ -214,8 +207,8 @@ class ScopusOptionsRegistration
             </script>
 
             <!-- Entry point for the Vue front end application code -->
-            <div id="scopus-options-main">
-                <scopus-options></scopus-options>
+            <div id="scopus-options-component">
+                Seems like the Vue component could not be attached properly!
             </div>
         </div>
         <?php
@@ -285,20 +278,13 @@ class ScopusOptionsRegistration
         return $users;
     }
 
-    // ******************
-    // AJAX FUNCTIONALITY
-    // ******************
+    // == AJAX FUNCTIONALITY
 
     /**
      * This function gets invoked, when a ajax call to the action "save_scopus_options" gets received.
      * It will take the values from the request and update the options with them.
      *
-     * CHANGELOG
-     *
-     * Added 12.02.2019
-     *
-     * Changed 24.02.2019
-     * The author categories list will now also be updated
+     * @return void
      */
     public function ajaxSaveOptions() {
         $expected_parameters = array('scopus_user');
@@ -313,5 +299,177 @@ class ScopusOptionsRegistration
             update_option('author_categories', $categories);
         }
         wp_die();
+    }
+
+    /**
+     * Handler for the ajax endpoint "get_scopuswp_options". Returns a dict which contains all important option values
+     * the way they are currently saved in the system.
+     *
+     * This endpoint does not expect any additional parameters.
+     *
+     * The response contains the following fields:
+     * - available_users: An assoc array, where the keys are the wordpress user IDs of all the users which are known
+     *   to the wordpress site and the values are strings of their according full names.
+     * - scopus_user_id: The wordpress user ID of the user, which is currently chosen to represent the scopuswp system
+     * - scopus_api_key: The string of the scopus API key, which is used to send the requests to the Scopus DB
+     * - author_categories: An array of strings, where each string is a category name available for the authors.
+     *
+     * @return void
+     */
+    public function ajaxGetScopuswpOptions() {
+        // So one part of the scopuswp options is that one can define which user is supposed to respresent the scopus
+        // wp system (all automatically generated publication posts will be posted under this users name). A good input
+        // method for this user would be a selection widget, where one can select from all the available users. But
+        // the frontend as is does not know which users are available. So we need to send this information with the
+        // the response.
+        // "available_users" will be an associative array, whose keys are the int user ids and the values are the full
+        // names of the users.
+        $users = get_users();
+        $available_users = [];
+        foreach ($users as $user) {
+            $user_id = $user->ID;
+            $user_meta = get_user_meta($user_id);
+            $user_name = $user_meta['first_name'] . ' ' . $user_meta['last_name'];
+            $available_users[$user_id] = $user_name;
+        }
+
+        $response = [
+            'available_users' => $available_users,
+            'scopus_user_id' => ScopusOptions::getScopusUserID(),
+            'scopus_api_key' => ScopusOptions::getScopusApiKey(),
+            'author_categories' => ScopusOptions::getAuthorCategories()
+        ];
+        wp_send_json($response);
+        wp_die();
+    }
+
+    /**
+     * Handler for ajax endpoint "update_scopuswp_options". Sets new values for the options.
+     *
+     * The endpoint expects the following additional parameters:
+     * - scopus_user_id: The int ID of the wordpress user to represent the scopuswp publication posts
+     * - scopus_api_key: The string value of the scopus API key
+     * - author_categories: An array with the string names of categories available for the authors
+     *
+     * This endoint does not respond with data.
+     *
+     * @return void
+     */
+    public function ajaxUpdateScopuswpOptions() {
+        $expected_params = ['scopus_user_id', 'scopus_api_key', 'author_categories'];
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+
+            // The static class "ScopusOptions" can be used to set new values to the options as well as retrieve the
+            // current values.
+            ScopusOptions::setScopusUserID($params['scopus_user_id']);
+            ScopusOptions::setScopusApiKey($params['scopus_api_key']);
+            ScopusOptions::setAuthorCategories($params['author_categories']);
+
+            wp_send_json(true);
+        } else {
+            wp_send_json_error();
+        }
+        wp_die();
+    }
+
+    // -- currently inactive
+
+    /**
+     * Handler for the ajax endpoint "options_get_author_categories". Returns the array of author categories.
+     *
+     * This ajax endpoint does not expect any additional parameters.
+     *
+     * The response contains the following fields:
+     * - author_categories: An array of the string category names available for the authors.
+     *
+     * @return void
+     */
+    public function ajaxOptionsGetCategories() {
+        $author_categories = ScopusOptions::getAuthorCategories();
+        $response = [
+            'author_categories' => $author_categories
+        ];
+        wp_send_json($response);
+        wp_die();
+    }
+
+    /**
+     * Handler for the ajax endpoint "options_update_author_categories". Updates the options value for the author
+     * categories array.
+     *
+     * This ajax endoint expects the following additional parameters:
+     * - author_categories: An array of the string category names
+     *
+     * The response does not contain data.
+     *
+     * @return void
+     */
+    public function ajaxOptionsUpdateCategories() {
+        $expected_params = ['author_categories'];
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+            $author_categories = $params['author_categories'];
+            ScopusOptions::setAuthorCategories($author_categories);
+        } else {
+            wp_send_json_error();
+        }
+        wp_die();
+    }
+
+    public function ajaxOptionsGetScopusApiKey() {
+        $api_key = ScopusOptions::getScopusApiKey();
+        $response = [
+            'api_key' => 'api_key'
+        ];
+        wp_send_json($response);
+        wp_die();
+    }
+
+    public function ajaxOptionsSetScopusApiKey() {
+        $expected_params = ['api_key'];
+        if (self::ajaxRequestContains($expected_params)) {
+            $params = self::ajaxRequestParameters($expected_params);
+            $api_key = $params['api_key'];
+            ScopusOptions::setScopusApiKey($api_key);
+        } else {
+            wp_send_json_error();
+        }
+        wp_die();
+    }
+
+    # == AJAX HELPER METHODS
+
+    /**
+     * Returns whether or not the current ajax request contains all parameters defines by the strings in $args.
+     *
+     * @param array $args A list of strings, where each string defines the name of one parameter which is expected to
+     *      be found within the ajax request.
+     * @return bool
+     */
+    public static function ajaxRequestContains(array $args) {
+        foreach ($args as $arg) {
+            if (!array_key_exists($arg, $_REQUEST)) {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+
+    /**
+     * Returns an assoc array with the keys being the string names in $args and the values the corresponding values
+     * extracted from the ajax request body.
+     *
+     * @param array $args An array of strings where each string defines the name of one parameter to be extracted
+     *      from the current ajax request.
+     * @return array
+     */
+    public static function ajaxRequestParameters(array $args) {
+        $values = [];
+        foreach ($args as $arg) {
+            $values[$arg] = $_REQUEST[$arg];
+        }
+
+        return $values;
     }
 }

@@ -13,33 +13,96 @@ namespace the16thpythonist\Wordpress\Scopus;
  *
  * This is just a static class, which wraps the access to the options of the package from the string names  of the
  * options to getter methods.
- * This way the functions can still be used even though the name or the method of saving these values changes
+ * This way the functions can still be used even though the name or the method of saving these values changes.
  *
- * CHANGELOG
- *
- * Added 12.02.2019
+ * TODO:
+ * - It would be better to access the options through some intermediate dict instead of with the hardcoded id names
+ *   as a way to decouple.
+ * - This class could also implement methods to check for the validity of the values...
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
 class ScopusOptions
 {
     /**
+     * Returns the string value which contains the Scopus API key.
+     *
+     * The scopus API Key is kind of like a password, which is required to be sent with every request to the scopus
+     * database to authenticate that the requests are actually permitted to access this kind of data.
+     * This method returns some kind of string but cannot guarantee, that the string which is returned is actually a
+     * valid API key!
+     *
+     * @return string The API Key used
+     */
+    public static function getScopusApiKey() {
+        // "get_option" will return the option value associated with the given key (first argument) and if there is no
+        // such key, it will return the default value (second argument) instead.
+        $api_key = get_option('scopuswp_api_key', '');
+        return $api_key;
+    }
+
+    /**
+     * Sets a new value for the scopus api key option.
+     *
+     * The string value of the scopus API key is saved as a wordpress option identified by "scopuswp_api_key".
+     *
+     * @param string $api_key The new value for the API key
+     */
+    public static function setScopusApiKey(string $api_key) {
+        set_option('scopuswp_api_key', $api_key);
+    }
+
+    /**
+     * Returns the array of available author categories.
+     *
+     * This list of string category names is the list of available categories, which can be assigned to an Author post
+     * The categories associated with an author determine the categories associated with a publication post, which was
+     * derived from this author and automatically published.
+     *
+     * @return array
+     */
+    public static function getAuthorCategories() {
+        $author_categories = get_option('scopuswp_author_categories', []);
+        return $author_categories;
+    }
+
+    /**
+     * Sets a new value for the author categories.
+     *
+     * @param array $author_categories The array of string categories
+     */
+    public static function setAuthorCategories(array $author_categories) {
+        set_option('scopuswp_author_categories', []);
+    }
+
+    /**
      * Returns the user ID of the scopus user, which is the user that acts as author to the scopus publication posts
      * on the wordpress backend.
      *
-     * CHANGELOG
+     * ScopusWp fetches new publications from a web database and automatically published them as new posts to the
+     * wordpress site. These posts have to be made by some user. The user ID of this user can be set by this Option.
      *
-     * Added 12.02.2019
-     *
-     * @return mixed
+     * @return int
      */
     public static function getScopusUserID() {
-        return get_option('scopus_user');
+        // If the options does not already exist, we will use the user id 0 as the default. This should (?) be the very
+        // first admin user which was created during the wordpress setup.
+        $scopus_user_id = get_option('scopuswp_user_id', 0);
+        return $scopus_user_id;
+    }
+
+    /**
+     * Sets a new value for the scopus user ID option.
+     *
+     * @param int $user_id
+     */
+    public static function setScopusUserID(int $user_id) {
+        set_option('scopuswp_user_id', $user_id);
     }
 
     /**
      * Returns the WP_User object for the user, that acts as the author to the scopus publication posts on the
-     * wordpress backend
+     * wordpress backend.
      *
      * CHANGELOG
      *
@@ -52,20 +115,5 @@ class ScopusOptions
         $scopus_user = get_user_by('id', $scopus_user_id);
         return $scopus_user;
     }
-
-    /**
-     * Returns the array of string category names for the categories with which the authors can be associated
-     *
-     * CHANGELOG
-     *
-     * Added 24.02.2019
-     *
-     * @return mixed
-     */
-    public static function getAuthorCategories() {
-        $author_categories = get_option('author_categories');
-        return $author_categories;
-    }
-
 
 }

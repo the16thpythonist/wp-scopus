@@ -1,6 +1,7 @@
 /* eslint-disable */
-import Vue from 'vue'
+import Vue from 'vue';
 import AuthorMeta from "./components/author/AuthorMeta";
+import ScopusOptions from "./components/options/ScopusOptions";
 
 Vue.config.productionTip = true;
 
@@ -11,7 +12,8 @@ new Vue({
  */
 
 var components = {
-  'author-meta-component': AuthorMeta
+  'author-meta-component': AuthorMeta,
+  'scopus-options-component': ScopusOptions
 }
 
 // Mounting the components only if an element with the corresponding ID actually exists

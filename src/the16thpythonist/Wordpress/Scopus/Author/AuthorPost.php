@@ -254,7 +254,11 @@ class AuthorPost extends PostPost
         $results_remaining = true;
         $index = 0;
         while ($results_remaining){
-            $search = $api->query($search_string)->start($index)->count($step)->viewStandard()->search();
+            $class = new \ReflectionClass($api);
+            $query_method = $class->getMethod('query');
+            $query = $query_method->invokeArgs($api, [$search_string]);
+            $search = $query->start($index)->count($step)->viewStandard()->search();
+            //$search = $api->query($search_string)->start($index)->count($step)->viewStandard()->search();
             $entries = $search->getEntries();
             foreach ($entries as $entry) {
                 $ids[] = $entry->getScopusId();

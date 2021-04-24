@@ -129,9 +129,7 @@ class WpScopusRegistration
     /**
      * This function register the option page for the plugin within wordpress.
      *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
+     * @return void
      */
     public function registerOptionsPage() {
         $scopus_options_registration = new ScopusOptionsRegistration();
