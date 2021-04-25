@@ -7,6 +7,10 @@ function Ajax() {
 }
 
 
+function restURL() {
+    return '/wp-json/wpscopus/v1/';
+}
+
 /*
     Planning for the ajax wrapper interface
 
@@ -22,16 +26,9 @@ function Ajax() {
 function BackendWrapper() {
 
     const AJAX_URL = ajaxURL();
+    const REST_URL = restURL();
 
-    const mockCategories = [
-        'Science',
-        'Biology',
-        'Nanotechnology',
-        'Physics',
-        'Chemistry',
-        'Astronomy',
-        'Computer Science'
-    ];
+    // -- Basic functions
 
     this.ajaxRequest = function(action, parameters) {
         let formData = new FormData();
@@ -43,6 +40,23 @@ function BackendWrapper() {
             return response.data;
         });
     }
+
+    this.getRequest = function(endpoint, parameters) {
+        // TODO: Better wrap this in a function
+        let url = REST_URL + endpoint;
+        return axios.get(url, {'params': parameters}).then(function (response) {
+           return response.data;
+        });
+    }
+
+    this.postRequest = function(endpoint, payload) {
+        let url = REST_URL + endpoint;
+        return axios.post(url, payload).then(function (response) {
+           return response.data;
+        });
+    }
+
+    // -- Specific functions
 
     this.saveAuthor = function(_author) {
         this.ajaxRequest('update_author_post', {
@@ -108,21 +122,32 @@ function BackendWrapper() {
         });
     }
 
+
+    // -- Options
+
+    this.getCategories = function () {
+        return this.getRequest('options/categories/', {}).then(function (data) {
+            return data['author_categories'];
+        })
+    };
+
+    this.getOptions = function () {
+        return this.getRequest('options/', {});
+    }
+
+    this.updateOptions = function (options) {
+        return this.postRequest('options/', options);
+    }
+
+    // -- WpFile related
+
     this.getFile = function(fileName) {
         return this.ajaxRequest('read_data_file', {'filename': fileName}).then(function (data){
             // console.log(`${fileName} content:`);
             // console.log(data);
             return data;
-        })
+        });
     }
-
-    // Still mock!
-
-    this.getCategories = function () {
-        return new Promise(function (resolve, reject) {
-            resolve(mockCategories);
-        })
-    };
 }
 
 

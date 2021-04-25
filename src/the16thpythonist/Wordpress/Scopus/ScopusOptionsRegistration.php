@@ -10,6 +10,8 @@ namespace the16thpythonist\Wordpress\Scopus;
 
 use the16thpythonist\Wordpress\Functions\PostUtil;
 
+
+
 /**
  * Class ScopusOptionsRegistration
  *
@@ -24,8 +26,11 @@ class ScopusOptionsRegistration
 
     const DEFAULT_OPTIONS = array(
         'scopus_user'           => '1',
-        'author_categories'     => array('microbes', 'exotic plants')
+        'author_categories'     => array('Physics', 'Mathematics', '')
     );
+
+    const REST_BASE = 'wpscopus/v1';
+    const REST_ROUTE = '/options/';
 
     // **************************************
     // FUNCTIONS FOR REGISTERING IN WORDPRESS
@@ -52,6 +57,8 @@ class ScopusOptionsRegistration
         // 12.02.2019
         // Registering the ajax functions, for example the callback to save all the received options
         $this->registerAjax();
+
+        $this->registerRest();
     }
 
     /**
@@ -109,6 +116,155 @@ class ScopusOptionsRegistration
         //add_action('wp_ajax_save_scopus_options', array($this, 'ajaxSaveOptions'));
         add_action('wp_ajax_get_scopuswp_options', [$this, 'ajaxGetScopuswpOptions']);
         add_action('wp_ajax_update_scopuswp_options', [$this, 'ajaxUpdateScopuswpOptions']);
+
+        add_action('wp_ajax_options_get_categories', [$this, 'ajaxOptionsGetCategories']);
+        add_action('wp_ajax_options_update_categories', [$this, 'ajaxOptionsUpdateCategories']);
+
+        add_action('wp_ajax_options_get_scopus_api_key', [$this, 'ajaxOptionsGetScopusApiKey']);
+        add_action('wp_ajax_options_update_scopus_api_key', [$this, 'ajaxOptionsUpdateScopusApiKey']);
+    }
+
+    /**
+     * Hooks the method "restInit" into the appropriate action, so that all the rest routes for the options work.
+     *
+     * @return void
+     */
+    public function registerRest() {
+        add_action('rest_api_init', [$this, 'restInit']);
+    }
+
+    /**
+     * Registers all the necessary REST routes for the wpscopus options.
+     *
+     * This method calls all the "register_rest_route" functions. This method should not be called directly, instead
+     * it has to be hooked into the action hook for "rest_api_init"!
+     *
+     * @return void
+     */
+    public function restInit() {
+        // Manipulating all the options at once. This is probably the most common action and is required by the options
+        // page.
+        register_rest_route(
+            self::REST_BASE,
+            self::REST_ROUTE,
+            [
+                [
+                    'methods'       => 'GET',
+                    'callback'      => [$this, 'restGetOptions'],
+                    'args'          => []
+                ],
+                [
+                    'methods'       => 'POST',
+                    'callback'      => [$this, 'restPostOptions'],
+                    'args'          => [
+                        'scopus_api_key' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'description'       => 'The API key used to request the Scopus data'
+                        ],
+                        'scopus_user_id' => [
+                            'required'          => true,
+                            'type'              => 'integer',
+                            'description'       => 'The user ID of the user to act as the autor of publication posts'
+                        ],
+                        'author_categories' => [
+                            'required'          => true,
+                            'type'              => 'array',
+                            'description'       => 'The possible categories to be assigned to authors'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        // Interfacig just the author categories
+        register_rest_route(
+            self::REST_BASE,
+            self::REST_ROUTE . 'categories/',
+            [
+                [
+                    'methods'       => 'GET',
+                    'callback'      => [$this, 'restGetCategories'],
+                    'args'          => []
+                ]
+            ]
+        );
+    }
+
+    // == REST INTERFACE
+
+    /**
+     * The REST GET endpoint for retrieving all the options values.
+     *
+     * The request does not need to contain any parameters.
+     *
+     * The response has the following fields:
+     * - scopus_user_id: The integer wordpress user ID for the user to act as the author of all the scopus publication
+     *   posts
+     * - scopus_api_key: The string value of the API key to be used to authenticate the scopus requests.
+     * - author_categories: An array of string values for the available author categories.
+     */
+    public function restGetOptions( \WP_REST_Request $request ) {
+        // So one part of the scopuswp options is that one can define which user is supposed to respresent the scopus
+        // wp system (all automatically generated publication posts will be posted under this users name). A good input
+        // method for this user would be a selection widget, where one can select from all the available users. But
+        // the frontend as is does not know which users are available. So we need to send this information with the
+        // the response.
+        // "available_users" will be an associative array, whose keys are the int user ids and the values are the full
+        // names of the users.
+        $users = get_users();
+        $available_users = [];
+        foreach ($users as $user) {
+            $user_id = $user->ID;
+            $user_first_name = get_user_meta($user_id, 'first_name', true);
+            $user_last_name = get_user_meta($user_id, 'last_name', true);
+            $user_name = $user_first_name . ' ' . $user_last_name;
+            $available_users[$user_id] = $user_name;
+        }
+
+        return [
+            'available_users'           => $available_users,
+            'scopus_user_id'            => ScopusOptions::getScopusUserID(),
+            'scopus_api_key'            => ScopusOptions::getScopusApiKey(),
+            'author_categories'         => ScopusOptions::getAuthorCategories()
+        ];
+    }
+
+    /**
+     * The REST POST endpoint for updating the option values.
+     *
+     * The request needs to contain the following parameters:
+     * - scopus_user_id: The integer wordpress user ID for the user to act as the author of all the scopus publication
+     *   posts
+     * - scopus_api_key: The string value of the API key to be used to authenticate the scopus requests.
+     * - author_categories: An array of string values for the available author categories.
+     *
+     * This method does not respond.
+     *
+     * @param \WP_REST_Request $request
+     */
+    public function restPostOptions( \WP_REST_Request $request ) {
+        // error_log(var_export($request, true));
+        ScopusOptions::setScopusUserID($request['scopus_user_id']);
+        ScopusOptions::setScopusApiKey($request['scopus_api_key']);
+        ScopusOptions::setAuthorCategories($request['author_categories']);
+    }
+
+    /**
+     * The REST GET endpoint for retrieving the options value of the author categories array.
+     *
+     * The request does not have to contain any additional parameters.
+     *
+     * The response contains the following fields:
+     * - author_categories: An array with all the string values for the available author categories
+     *
+     * @param \WP_REST_Request $request The request
+     * @return array The response array
+     */
+    public function restGetCategories( \WP_REST_Request $request ) {
+        return [
+            'author_categories'         => ScopusOptions::getAuthorCategories()
+        ];
     }
 
     // ************************
@@ -284,6 +440,8 @@ class ScopusOptionsRegistration
      * This function gets invoked, when a ajax call to the action "save_scopus_options" gets received.
      * It will take the values from the request and update the options with them.
      *
+     * @deprecated
+     *
      * @return void
      */
     public function ajaxSaveOptions() {
@@ -328,8 +486,9 @@ class ScopusOptionsRegistration
         $available_users = [];
         foreach ($users as $user) {
             $user_id = $user->ID;
-            $user_meta = get_user_meta($user_id);
-            $user_name = $user_meta['first_name'] . ' ' . $user_meta['last_name'];
+            $user_first_name = get_user_meta($user_id, 'first_name', true);
+            $user_last_name = get_user_meta($user_id, 'last_name', true);
+            $user_name = $user_first_name . ' ' . $user_last_name;
             $available_users[$user_id] = $user_name;
         }
 
@@ -373,8 +532,6 @@ class ScopusOptionsRegistration
         wp_die();
     }
 
-    // -- currently inactive
-
     /**
      * Handler for the ajax endpoint "options_get_author_categories". Returns the array of author categories.
      *
@@ -411,27 +568,49 @@ class ScopusOptionsRegistration
             $params = self::ajaxRequestParameters($expected_params);
             $author_categories = $params['author_categories'];
             ScopusOptions::setAuthorCategories($author_categories);
+            wp_send_json(true);
         } else {
             wp_send_json_error();
         }
         wp_die();
     }
 
+    /**
+     * Ajax handler for the endoint "options_get_scopus_api_key". Returns the Scopus API key option value.
+     *
+     * This endpoint does not expect additional parameters.
+     *
+     * The response has the following fields:
+     * - scopus_api_key: THe string scopus api key, which is used for the scopus requests
+     *
+     * @return void
+     */
     public function ajaxOptionsGetScopusApiKey() {
         $api_key = ScopusOptions::getScopusApiKey();
         $response = [
-            'api_key' => 'api_key'
+            'scopus_api_key' => 'api_key'
         ];
         wp_send_json($response);
         wp_die();
     }
 
-    public function ajaxOptionsSetScopusApiKey() {
-        $expected_params = ['api_key'];
+    /**
+     * Ajax handler for the endpoint "options_update_scopus_api_key". Sets a new value to the scopus api key option
+     *
+     * This endpoint expects the following additional parameters:
+     * - scopus_api_key: The new string value for the scopus api key
+     *
+     * This endpoint does not respond data.
+     *
+     * @return void
+     */
+    public function ajaxOptionsUpdateScopusApiKey() {
+        $expected_params = ['scopus_api_key'];
         if (self::ajaxRequestContains($expected_params)) {
             $params = self::ajaxRequestParameters($expected_params);
             $api_key = $params['api_key'];
             ScopusOptions::setScopusApiKey($api_key);
+            wp_send_json(true);
         } else {
             wp_send_json_error();
         }

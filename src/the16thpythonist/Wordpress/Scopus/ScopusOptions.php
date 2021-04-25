@@ -8,6 +8,8 @@
 
 namespace the16thpythonist\Wordpress\Scopus;
 
+// include_once('wp-includes/option.php');
+
 /**
  * Class ScopusOptions
  *
@@ -16,14 +18,24 @@ namespace the16thpythonist\Wordpress\Scopus;
  * This way the functions can still be used even though the name or the method of saving these values changes.
  *
  * TODO:
- * - It would be better to access the options through some intermediate dict instead of with the hardcoded id names
- *   as a way to decouple.
  * - This class could also implement methods to check for the validity of the values...
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
 class ScopusOptions
 {
+    const OPTION_KEYS = [
+        'api_key'           => 'scopuswp_api_key',
+        'author_categories' => 'scopuswp_author_categories',
+        'user_id'           => 'scopuswp_user_id'
+    ];
+
+    const DEFAULT_VALUES = [
+        'api_key'           => '',
+        'author_categories' => ['Physics', 'Mathematics', 'Computer Science'],
+        'user_id'           => 1
+    ];
+
     /**
      * Returns the string value which contains the Scopus API key.
      *
@@ -37,7 +49,10 @@ class ScopusOptions
     public static function getScopusApiKey() {
         // "get_option" will return the option value associated with the given key (first argument) and if there is no
         // such key, it will return the default value (second argument) instead.
-        $api_key = get_option('scopuswp_api_key', '');
+        $api_key = get_option(
+            self::OPTION_KEYS['api_key'],
+            self::DEFAULT_VALUES['api_key']
+        );
         return $api_key;
     }
 
@@ -49,7 +64,7 @@ class ScopusOptions
      * @param string $api_key The new value for the API key
      */
     public static function setScopusApiKey(string $api_key) {
-        set_option('scopuswp_api_key', $api_key);
+        update_option(self::OPTION_KEYS['api_key'], $api_key);
     }
 
     /**
@@ -62,7 +77,10 @@ class ScopusOptions
      * @return array
      */
     public static function getAuthorCategories() {
-        $author_categories = get_option('scopuswp_author_categories', []);
+        $author_categories = get_option(
+            self::OPTION_KEYS['author_categories'],
+            self::DEFAULT_VALUES['author_categories']
+        );
         return $author_categories;
     }
 
@@ -72,7 +90,7 @@ class ScopusOptions
      * @param array $author_categories The array of string categories
      */
     public static function setAuthorCategories(array $author_categories) {
-        set_option('scopuswp_author_categories', []);
+        update_option(self::OPTION_KEYS['author_categories'], $author_categories);
     }
 
     /**
@@ -87,7 +105,10 @@ class ScopusOptions
     public static function getScopusUserID() {
         // If the options does not already exist, we will use the user id 0 as the default. This should (?) be the very
         // first admin user which was created during the wordpress setup.
-        $scopus_user_id = get_option('scopuswp_user_id', 0);
+        $scopus_user_id = get_option(
+            self::OPTION_KEYS['user_id'],
+            self::DEFAULT_VALUES['user_id']
+        );
         return $scopus_user_id;
     }
 
@@ -97,7 +118,7 @@ class ScopusOptions
      * @param int $user_id
      */
     public static function setScopusUserID(int $user_id) {
-        set_option('scopuswp_user_id', $user_id);
+        update_option(self::OPTION_KEYS['user_id'], $user_id);
     }
 
     /**
