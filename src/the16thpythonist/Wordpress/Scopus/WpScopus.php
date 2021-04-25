@@ -50,7 +50,7 @@ class WpScopus
      * @param string $api_key
      */
     public static function register($post_type, string $api_key) {
-        static::$API_KEY = $api_key;
+        self::$API_KEY = ScopusOptions::getScopusApiKey();
 
         $registration = new WpScopusRegistration();
         $registration->register();

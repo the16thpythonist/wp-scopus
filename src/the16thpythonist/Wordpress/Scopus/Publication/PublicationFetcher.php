@@ -47,12 +47,6 @@ use the16thpythonist\Wordpress\Scopus\ScopusOptions;
  * }
  * ```
  *
- * CHANGELOG
- *
- * Added 28.10.2018
- *
- * @since 0.0.0.2
- *
  * @package the16thpythonist\Wordpress\Scopus
  */
 class PublicationFetcher

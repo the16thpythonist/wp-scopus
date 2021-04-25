@@ -78,14 +78,14 @@ class UpdateKITOpenCommand extends Command
         // Here we just extract the author names from all the post wrapper objects.
         // the names have the format "{last name}, {initial of first name}*", because this is the way KITOpen Api
         // expects them to be.
-        $author_names = array_map(function ($a) {return $a->last_name . ', ' . $a->first_name[0] . '*'; }, $authors);
+        $author_names = array_map(function ($a) {return $a->last_name . ',' . $a->first_name[0] . '*'; }, $authors);
         $author_query = implode(' or ', $author_names);
 
-        $year = $args['newer_than'] . '-';
+        $year = $args['more_recent_than'] . '-';
         $type = implode(',', self::TYPES);
         $args = array(
             'year'      => $year,
-            'type'      => $type,
+            // 'type'      => $type,
             'author'    => $author_query
         );
 
