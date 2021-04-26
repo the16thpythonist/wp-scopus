@@ -724,7 +724,7 @@ class AuthorPost extends PostPost
             'indexed_name'          => 'post_title',
             'first_name'            => 'meta_input/first_name',
             'last_name'             => 'meta_input/last_name',
-            'full name'             => 'meta_input/full_name',
+            'full_name'             => 'meta_input/full_name',
             'categories'            => 'meta_input/categories',
             'scopus_ids'            => 'meta_input/scopus_author_id',
             'scopus_whitelist'      => 'meta_input/scopus_whitelist',

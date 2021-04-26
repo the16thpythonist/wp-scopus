@@ -182,10 +182,14 @@
                 author: author.emptyScopusAuthor(),
                 backend: new backend.BackendWrapper(),
                 status: {},
-                debug: false
+                debug: true
             }
         },
         methods: {
+            /**
+             * This method sends a request to the backend to retrieve the list of available author categories.
+             * This list is then assigned to the "categories" attribute of this component.
+             */
             fetchCategories: function () {
                 let optionsPromise = this.backend.getCategories();
                 let self = this;
@@ -193,6 +197,11 @@
                     self.categories = categories;
                 })
             },
+            /**
+             * This method sends a request(s) to the backend to retrieve the information about the author post which is
+             * represented by the current post id. This information is returned as a ScopusAuthor object and this
+             * scopus author object is then assigned to the "author" attribute of this component.
+             */
             fetchAuthor: function() {
                 let authorPromise = this.backend.getAuthor(this.postId);
                 let self = this;
@@ -216,21 +225,48 @@
                     self.log('-- fetched author --');
                     self.log(self.author);
 
+                    // The whole affiliation thing probably also needs some explaining, because at the moment it is
+                    // rather confusing.
+                    // First of all, the reason why we actually make another seperate request here is because the
+                    // information about which affiliation the author has is not actually saved as meta information of
+                    // the author post itself. Instead it is saved as a seperata data record, hence requiring a seperate
+                    // request.
+                    // Now the thing is though, the information about which affiliation is whitelisted and blacklisted
+                    // *is* a meta information of the author post. So what we need to do is to get the affiliation
+                    // information via request and then update those affiliation objects with the information of wheter
+                    // or not they are whitelisted from the author object and only then we can add them to the
+                    // author object.
                     let authorAffiliationsPromise = self.backend.getAuthorAffiliations(self.author);
                     authorAffiliationsPromise.then(function (affiliations) {
+                        for (const [affiliationId, affiliation] of Object.entries(affiliations)) {
+                            affiliation.whitelist = self.author.isAffiliationWhitelisted(affiliationId);
+                        }
+                        return affiliations;
+                    }).then(function (affiliations) {
                         self.$set(self.author, 'affiliations', affiliations);
                         self.$forceUpdate();
                     });
                 })
             },
+            /**
+             * The callback function for whenever any input event is triggered within the component. This includes all
+             * of the seperate input widgets. Regardless of what the input is, this method changes the status display
+             * to inform the user of unsaved changes and urging to press the save button.
+             */
             onInput: function () {
                 this.setStatusModified();
             },
+            /**
+             * The callback function for the "save" button at the end of the component. This method will take the
+             * current state of the "author" attribute and send a request to update the database record with this new
+             * data. The callback also triggers the page to be reloaded.
+             */
             onSave: function () {
                 this.log('-- saving author -- ');
                 this.log(this.author);
 
-                let savePromise = this.backend.saveAuthor(this.author);
+                // let savePromise = this.backend.saveAuthor(this.author);
+                let savePromise = this.backend.putAuthor(this.author);
                 let self = this;
                 savePromise.then(function (value) {
                     self.log('(+) Sucessfully saved!');
@@ -239,6 +275,9 @@
                     self.log('(-) Saving failed!');
                     self.setStatusError(message)
                 });
+
+                // Reloading the page after saving
+                window.location.reload();
             },
             onAffiliationFetch: function () {
                 this.log('-- starting affiliation gather --');
@@ -253,27 +292,60 @@
                     })
                 }
             },
+            /**
+             * This method is the callback for the creation of the row label for the ObjectRadioSelect component. It
+             * is called for every entry of the object which is at the heart of the component. It is supposed to return
+             * a string which is to be displayed as the title of the row corresponding to that entry.
+             *
+             * In this case it displays the affiliation name and the affiliation ID as the title.
+             */
             createAffiliationLabel: function (obj, key) {
                 return `${obj[key].name} (${obj[key].id})`;
             },
+            /**
+             * This method is the callback for the retrieving the value for the ObjectRadioSelect component. For every
+             * entry of the object, this method is to return the value which that entry represents.
+             *
+             * In this case for a given entry (row) it returns of wheter or not the "whitelist" property is set for
+             * the affiliation object in question.
+             */
             getAffiliationValue: function(vm, obj, key) {
                 return (obj[key].whitelist ? 'whitelist' : 'blacklist');
             },
+            /**
+             * This method is the callback for setting the value for the ObjectRadioSelect component. For every entry
+             * of the object, it is supposed to take some action to save a new value assignment given through a UI
+             * interaction.
+             *
+             * In this case, the string value of "whitelist" or "blacklist" is appropriately saved as the whitelist
+             * boolean attribute of the affiliation object in question.
+             */
             setAffiliationValue: function(vm, obj, key, value) {
                 obj[key].whitelist = (value === 'whitelist');
             },
+            /**
+             * Sets the status display to "modified" informs the user of unsaved changes.
+             */
             setStatusModified: function() {
                 this.status = {
                     'type': 'warning',
                     'message': 'You have unsaved modification to the author data, please save with the button below!'
                 }
             },
+            /**
+             * Sets the status display to "success" which indicates that the saving process has worked
+             */
             setStatusSaved: function() {
                 this.status = {
                     'type': 'success',
                     'message': 'Successfully saved the changes'
                 }
             },
+            /**
+             * Sets the status display to "error" and displays the given error message.
+             *
+             * @param {String} message The message to be displayed in the status component
+             */
             setStatusError: function(message) {
                 this.status = {
                     'type': 'error',
@@ -286,6 +358,10 @@
                 }
             }
         },
+        /**
+         * This metod is called after the component has been created by the Vue runtime routine. It will start the
+         * methods which will retrieve the data from the backend database using the REST requests.
+         */
         created() {
             this.log("=== AuthorMeta.vue component created ===");
             this.fetchCategories();

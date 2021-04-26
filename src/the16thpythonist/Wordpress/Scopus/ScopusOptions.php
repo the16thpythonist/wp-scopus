@@ -13,11 +13,17 @@ namespace the16thpythonist\Wordpress\Scopus;
 /**
  * Class ScopusOptions
  *
- * This is just a static class, which wraps the access to the options of the package from the string names  of the
- * options to getter methods.
- * This way the functions can still be used even though the name or the method of saving these values changes.
+ * This is a static class which wraps the access to the worpdress option values for the package. It's methods can be
+ * used to get and set the option values without having to directly invoke the wordpress methods for it.
+ *
+ * EXAMPLE
+ *
+ *    // The api key can be retrieved and updated with it's according methods
+ *    $api_key = ScopusOptions::getScopusApiKey();
+ *    ScopusOptions::setScopusApiKey("newsecretkey");
  *
  * TODO:
+ *
  * - This class could also implement methods to check for the validity of the values...
  *
  * @package the16thpythonist\Wordpress\Scopus

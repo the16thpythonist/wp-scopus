@@ -26,13 +26,16 @@ function emptyScopusAuthor() {
 
 // CLASSES
 
+
 function ScopusAuthor(
     postId,                   // string
     firstName,                  // string
     lastName,                   // string
     scopusIds,                  // array of strings
     categories,                 // array of strings
-    affiliations                // assoc array string -> ScopusAuthorAffiliation
+    affiliations,                // assoc array string -> ScopusAuthorAffiliation
+    whitelist,
+    blacklist,
 ) {
     this.id = postId;
     this.firstName = firstName;
@@ -40,6 +43,12 @@ function ScopusAuthor(
     this.scopusIds = scopusIds;
     this.categories = categories;
     this.affiliations = affiliations;
+    this.whitelist = whitelist;
+    this.blacklist = blacklist;
+
+    this.isAffiliationWhitelisted = function(affiliationId) {
+        return this.whitelist.includes(affiliationId);
+    }
 }
 
 function ScopusAuthorAffiliation(

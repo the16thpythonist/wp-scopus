@@ -30,6 +30,10 @@ class AuthorPostRegistration implements PostRegistration
     const PHP_NEWLINE = "\r\n";
     const HTML_NEWLINE = '&#13;&#10;';
 
+    const REST_BASE = 'wpscopus/v1';
+    const REST_ROUTE = '/author/';
+
+
     public $label;
     public $post_type;
 
@@ -43,14 +47,18 @@ class AuthorPostRegistration implements PostRegistration
         'first_name'        => 'First Name',
         'last_name'         => 'Last Name',
         'scopus_author_id'  => 'Scopus ID',
-        'categories'        => 'Categories'
+        'categories'        => 'Categories',
+        'scopus_whitelist'  => 'Scopus Whitelist',
+        'scopus_blacklist'  => 'Scopus Blacklist'
     );
 
     public static $META_SINGLE = array(
         'first_name'        => true,
         'last_name'         => true,
         'scopus_author_id'  => false,
-        'categories'        => false
+        'categories'        => false,
+        'scopus_whitelist'  => false,
+        'scopus_blacklist'  => false,
     );
 
     /**
@@ -86,46 +94,144 @@ class AuthorPostRegistration implements PostRegistration
     }
 
     /**
-     * CHANGELOG
      *
-     * Added 29.08.2018
-     *
-     * Changed 02.01.2019
-     * Added an additional AJAX function, which saves the current setting of whitelist and blacklist in the edit page
-     * of the AuthorPost.
-     *
-     * Changed 24.02.2019
-     * Moved the ajax registrations into an own method and calling it here.
-     *
-     * Changed 10.12.2019
-     * Added the call to the function "registerAdminListViewModifications", which will register all the callbacks, that
-     * are neceassary for the custom behaviour of the post types list view in the admin area of the site.
-     *
-     * @since 0.0.0.0
      */
     public function register() {
         add_action('init', array($this, 'registerPostType'));
-        add_action('add_meta_boxes', array($this, 'registerMetabox'));
-
-        // 24.02.2019
-        // Moved the actual ajax registration into its own method
-        $this->registerAJAX();
-
         // A custom save method is needed to save all the data from the custom meta box to the correct post meta values
         add_action('save_post', array($this, 'savePost'));
 
-        // 10.12.2019
-        // Creates a custom list view of the posts in the admin area
+        $this->registerMetaBox();
         $this->registerAdminListViewModification();
+
+        $this->registerAJAX();
+        $this->registerRest();
     }
+
+    /**
+     * Hooks the function "addMetabox" into the appropriate wordpress action hook "add_meta_boxes".
+     *
+     * @return void
+     */
+    public function registerMetaBox() {
+        add_action('add_meta_boxes', array($this, 'addMetabox'));
+    }
+
+    public function registerRest() {
+        add_action('rest_api_init', [$this, 'restInit']);
+    }
+
+    // == REST INTERFACE
+
+    public function restInit() {
+        // Retrieving and updating a single author post
+        register_rest_route(
+            self::REST_BASE,
+            self::REST_ROUTE . '(?P<ID>[0-9]+)',
+            [
+                [
+                    'methods'           => 'GET',
+                    'callback'          => [$this, 'restGetAuthor'],
+                    'args'              => []
+                ],
+                [
+                    'methods'           => 'PUT',
+                    'callback'          => [$this, 'restPutAuthor'],
+                    'args'              => [
+                        'first_name'        => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'description'       => 'The first name of the author'
+                        ],
+                        'last_name'         => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'description'       => 'The last name of the author'
+                        ],
+                        'categories'        => [
+                            'required'          => false,
+                            'type'              => 'array',
+                            'description'       => 'An array of the string names of categories assigned to the author'
+                        ],
+                        'scopus_ids'        => [
+                            'required'          => false,
+                            'type'              => 'array',
+                            'description'       => 'An array of the string scopus ids associated with the author'
+                        ],
+                        'whitelist'         => [
+                            'required'          => false,
+                            'type'              => 'array',
+                            'description'       => 'Array of affiliation ids whitelisted for this author'
+                        ],
+                        'blacklist'         => [
+                            'required'          => false,
+                            'type'              => 'array',
+                            'description'       => 'Array of affiliations ids blacklisted for this author'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        // Starting the author fetch process
+
+    }
+
+
+    public function restGetAuthor( $request ) {
+        $post_id = $request['ID'];
+
+        // ~ loading the actual author post object and formatting the JSON return
+        $author_post = new AuthorPost($post_id);
+        $response = [
+            'post_id'           => $author_post->post_id,
+            'first_name'        => $author_post->first_name,
+            'last_name'         => $author_post->last_name,
+            'scopus_ids'        => $author_post->author_ids,
+            'categories'        => $author_post->categories,
+            'scopus_whitelist'  => $author_post->scopus_whitelist,
+            'scopus_blacklist'  => $author_post->scopus_blacklist,
+        ];
+        return $response;
+    }
+
+    public function restPutAuthor( $request ) {
+        $post_id = $request['ID'];
+
+        // first_name, last_name, scopus_ids and categories are meta values associated with the specific post entry.
+        // Thos can be updated using the "update" method of the Publication post.
+        // "updateArgsFromRequest" assembles the arguments array from the $request given an additional mapping assoc
+        // array which translates the key names from the request array to the appropriate key names of the args array
+        $args = $this->updateArgsFromRequest($request, [
+            'first_name'        => 'first_name',
+            'last_name'         => 'last_name',
+            'scopus_ids'        => 'scopus_ids',
+            'categories'        => 'categories',
+            'scopus_whitelist'  => 'scopus_whitelist',
+            'scopus_blacklist'  => 'scopus_blacklist'
+        ]);
+        // error_log(var_export($args, true));
+        AuthorPost::update($post_id, $args);
+    }
+
+    public function updateArgsFromRequest( $request, array $mapping ) {
+        $args = [];
+        foreach ($mapping as $key => $arg ) {
+            if ($request->has_param($key)) {
+                $args[$arg] = $request[$key];
+            }
+        }
+
+        return $args;
+    }
+
+    // == MANAGING THE POST TYPE ==
 
     /**
      * Wraps the callback registrations for all the hooks, that are involved in modifying the list view of this post
      * type  within the admin area of the site
      *
-     * CHANGELOG
-     *
-     * Added 10.12.2019
+     * @return void
      */
     public function registerAdminListViewModification(){
 
@@ -169,11 +275,13 @@ class AuthorPostRegistration implements PostRegistration
     }
 
     /**
-     * CHANGELOG
+     * This function acutally registers the new author post type. It should be called first out of all registration
+     * functions.
      *
-     * Added 29.08.2018
+     * The post type is registered by calling the wordpress function register_post_type with an appropriate array of
+     * arguments.
      *
-     * @since 0.0.0.0
+     * @return void
      */
     public function registerPostType() {
         $args = array(
@@ -229,20 +337,10 @@ class AuthorPostRegistration implements PostRegistration
     /**
      * callback for the wordpress 'save_post' hook. Makes sure all the data from the custom metabox gets saved to post
      *
-     * CHANGELOG
-     *
-     * Added 30.08.2018
-     *
-     * Changed 20.10.2018
-     * Changed the if statement, that checks for the post type to use a function, which also checks if the saving process
-     * is actually happening over the wordpress backend, as there was an error caused when the 'wp_insert_post' function
-     * was called.
-     *
-     * Changed 28.10.2018
-     * Made the function quit in case the post was not saved via the editor, but by the wp_insert_post function from
-     * within the code
-     *
-     * @since 0.0.0.0
+     * This function is most importantly called when the wordpress "save" button within the post detail view of the
+     * admin backend is pressed. But it is more than that. In fact, this function is called every time, any post is
+     * saved. This also applies to programmatically saved posts using AUthorPost::update and AuthorPost::insert for
+     * example.
      *
      * @param $post_id
      * @return mixed
@@ -342,7 +440,7 @@ class AuthorPostRegistration implements PostRegistration
      *
      * @return void
      */
-    public function registerMetabox() {
+    public function addMetabox() {
         add_meta_box(
             $this->post_type . '-meta',
             // This string will be the title of the metabox displayed within the browser:
@@ -374,17 +472,19 @@ class AuthorPostRegistration implements PostRegistration
     public function callbackMetabox(\WP_Post $post) {
         $post_id = $post->ID;
         $author_post = new AuthorPost($post_id);
+
+        // Really the only thing we need the frontend to know during the loading of the page, is the post ID. The
+        // Vue component can than use this post ID to send REST GET requests to the REST API interfaces defined by this
+        // class to retrieve the actual data about the post dynamically.
         ?>
         <script> var POST_ID = <?php echo $post_id; ?>; </script>
-        <div id="author-meta-component">
-            This section should contain the Vue frontend application...
-        </div>
+            <div id="author-meta-component">
+                Seems like the Vue component could not be loaded properly...
+            </div>
         <?php
     }
 
-    // *********************************
-    // AJAX OPERATIONS FOR THE POST TYPE
-    // *********************************
+    // == AJAX ENDPOINTS ==
 
     /**
      * The ajax method, which is called to start the process of fetching the author affiliations.
@@ -563,11 +663,7 @@ class AuthorPostRegistration implements PostRegistration
         wp_die();
     }
 
-    // INSERT THE NECESSARY AJAX
-
-    // **********************
-    // MODIFY ADMIN LIST VIEW
-    // **********************
+    // == MODIFY ADMIN LIST VIEW ==
 
     /*
      * MODIFYING THE ADMIN COLUMNS
@@ -647,9 +743,7 @@ class AuthorPostRegistration implements PostRegistration
 
     }
 
-    // **************
-    // STATIC METHODS
-    // **************
+    // == UTILITY METHODS ==
 
     /**
      * This method computes an array with the format needed to call the AuthorPost::insert method from the values in

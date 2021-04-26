@@ -79,26 +79,20 @@
         font-size: 0.85em;
     }
 
-    .input {
-        width: 100%;
-        padding-left: 0px;
-        padding-top: 1px;
-        margin: 0px;
-        border-style: none;
-        border-bottom-style: solid;
-        border-bottom-width: 2px;
-        box-shadow: none;
-        font-size: 1.05em;
-    }
-
     .input::placeholder {
         font-size: 1.05em;
         color: #696969;
     }
 
+    .input {
+        font-size: 1em;
+        width: available;
+        flex-grow: 2;
+        margin-right: 10px;
+    }
+
     .input:focus {
-        box-shadow: none;
+        box-shadow: 0 0 1px #3ECF8E;
         border-color: #3ECF8E;
-        transition: 0.5s border-color ease-in-out;
     }
 </style>

@@ -15,6 +15,15 @@ use the16thpythonist\Wordpress\Functions\PostUtil;
 /**
  * Class ScopusOptionsRegistration
  *
+ * The registration class for the options page of the WpScopus. This class wraps all necessary steps which are required
+ * to register the various functionality of the scopus options within wordpress. This mainly includes the registration
+ * of an additional settings page in the wordpress admin backend and the adding of REST routes to fetch the option data.
+ *
+ * All registration steps can be executed by invoking the "register" method on a new instance of this class. This
+ * process should be executed during the wordpress startup routine.
+ *
+ *    $options_registration = new ScopusOptionsRegistration();
+ *    $options_registration->register();
  *
  * @package the16thpythonist\Wordpress\Scopus
  */
@@ -37,36 +46,28 @@ class ScopusOptionsRegistration
     // **************************************
 
     /**
-     * Calls all the necessary functions to register the new page in wordpress
+     * Calls all the necessary functions to register the new page in wordpress.
      *
-     * CHANGELOG
+     * This is the only function, which should actually be invoked from an outside scope.
      *
-     * Added 11.02.2019
-     *
-     * Changed 12.02.2019
-     * Added the method to register the ajax functions
+     * @return void
      */
     public function register() {
 
         // Hooking in the call to create new option page into the wordpress init
         $this->registerOptionPage();
 
-        // Setting the options to default values for the first time.
-        $this->registerDefaultOptions();
+        // Creates all the REST routes, which can be used to manipulate the option values from the frontend JS.
+        $this->registerRest();
 
-        // 12.02.2019
         // Registering the ajax functions, for example the callback to save all the received options
         $this->registerAjax();
-
-        $this->registerRest();
     }
 
     /**
-     * Hooks in the method "addOptionPage" of the object to be called in the wordpress "admin_menu" action hook
+     * Hooks in the method "addOptionPage" of the object to be called in the wordpress "admin_menu" action hook.
      *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
+     * @return void
      */
     public function registerOptionPage() {
         add_action('admin_menu', array($this, 'addOptionPage'));
@@ -75,11 +76,10 @@ class ScopusOptionsRegistration
     /**
      * Calls the wordpress function to register a new option page bind the callback for the html content
      * to it.
+     *
      * This function needs to be executed within the worpress "admin_menu" hook.
      *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
+     * @return void
      */
     public function addOptionPage() {
         add_options_page(
@@ -87,24 +87,10 @@ class ScopusOptionsRegistration
             self::MENU_TITLE,
             'manage_options',
             self::MENU_SLUG,
+            // The "display" method of this class is the one, which echos the actual HTML code to be displayed within
+            // this new options page.
             array($this, 'display')
         );
-    }
-
-    /**
-     * Assigns the options with default values, if they do not already have values.
-     *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
-     */
-    public function registerDefaultOptions() {
-        foreach (self::DEFAULT_OPTIONS as $option_name => $default_value) {
-
-            // This method checks if the option exists and if it doesnt if will create an option with that name
-            // and set it to the default value.
-            $this->setOptionDefault($option_name, $default_value);
-        }
     }
 
     /**
@@ -267,101 +253,24 @@ class ScopusOptionsRegistration
         ];
     }
 
-    // ************************
-    // DEALING WITH THE OPTIONS
-    // ************************
-
-    /**
-     * Will assign the given "value" to the option with the given "option_name", but ONLY if the option does not
-     * already exists.
-     *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
-     *
-     * @param string $option_name
-     * @param $value
-     */
-    public function setOptionDefault(string $option_name, $value) {
-        // First we check if the option already exists, if it doesnt it will be set to a default value
-        // The call to "get_option" will evaluate as FALSE, if no option by that name exists or if the option
-        // field is empty!
-        if (!get_option($option_name)) {
-            update_option($option_name, $value);
-        }
-    }
-
-    /**
-     * Returns the WP_User object for the set current scopus user.
-     *
-     * CHANGELOG
-     *
-     * Added 11.02.2019
-     *
-     * @return bool|\WP_User
-     */
-    public function getCurrentScopusUser() {
-        $user_id = get_option('scopus_user');
-        $user = get_user_by('id', $user_id);
-        return $user;
-    }
-
-    /**
-     * Returns the array with the string category names, with which an author can be associated
-     *
-     * CHANGELOG
-     *
-     * Added 24.02.2019
-     *
-     * @return mixed
-     */
-    public function getAuthorCategories() {
-        $categories = get_option('author_categories');
-        return $categories;
-    }
-
-    // **************************************
-    // FOR DISPLAYING THE ACTUAL HTML CONTENT
-    // **************************************
+    // == DISPLAYIN THE ACTUAL HTML CONTENT
 
     /**
      * Echos the actual html code needed to display the options page.
      *
+     * CHANGELOG
      *
+     * Previously the html code of the options page was actually mostly static html code. The current option values had
+     * been passed to this html code by creating a JS script, which held the values as constants. Now however the
+     * options page has been reworked to be a Vue application (The widget for adding the categories was way easier this
+     * way). Thus this method really only provided the necessary div for the Vue component to bind to. The current
+     * option values will be retrieved from the REST endpoint.
      *
      * @return void
      */
     public function display() {
-        // Ok apparently here I need to check for the _POST array to contain the new options in case the
-        // page gets reloaded due to clicking the save changes button.
-
-
-        // Creating the Javascript code for ṕassing the currently selected user and the list of all available users to
-        // the front end application
-        $user_arrays = self::allUserArrays();
-        $user_arrays_code = PostUtil::javascriptExposeObjectArray('USERS', $user_arrays);
-
-        $current_scopus_user = $this->getCurrentScopusUser();
-        $current_scopus_user_array = self::createUserArray($current_scopus_user);
-        $current_scopus_user_code = PostUtil::javascriptExposeObject('CURRENT_USER', $current_scopus_user_array);
-
-        // 24.02.2019
-        // Passing the array with all the author categories to the front end
-        $author_categories = $this->getAuthorCategories();
-        $author_categories_code = PostUtil::javascriptExposeObject('CATEGORIES', $author_categories);
         ?>
         <div class="scopus-options-wrapper">
-            <!-- This script contains dynamically created JS code, that passes values to the VUE application -->
-            <script>
-                <?php
-                // 24.02.2019
-                // Added the code for the author categories object
-                echo $user_arrays_code;
-                echo $current_scopus_user_code;
-                echo $author_categories_code;
-                ?>
-            </script>
-
             <!-- Entry point for the Vue front end application code -->
             <div id="scopus-options-component">
                 Seems like the Vue component could not be attached properly!
@@ -370,9 +279,7 @@ class ScopusOptionsRegistration
         <?php
     }
 
-    // *****************
-    // UTILITY FUNCTIONS
-    // *****************
+    // == UTILITY FUNCTIONS
 
     /**
      * Returns an array, which contains an associative array for each user currently in the wordpress system.
@@ -435,29 +342,6 @@ class ScopusOptionsRegistration
     }
 
     // == AJAX FUNCTIONALITY
-
-    /**
-     * This function gets invoked, when a ajax call to the action "save_scopus_options" gets received.
-     * It will take the values from the request and update the options with them.
-     *
-     * @deprecated
-     *
-     * @return void
-     */
-    public function ajaxSaveOptions() {
-        $expected_parameters = array('scopus_user');
-        if (PostUtil::containsGETParameters($expected_parameters)) {
-            // Updating the actual options
-            update_option('scopus_user', $_GET['scopus_user']);
-
-            // 24.02.2019
-            // This list of categories dictates, which of the categories can be added to a user, when a new user is
-            // being created.
-            $categories = str_getcsv($_GET['author_categories']);
-            update_option('author_categories', $categories);
-        }
-        wp_die();
-    }
 
     /**
      * Handler for the ajax endpoint "get_scopuswp_options". Returns a dict which contains all important option values
@@ -650,5 +534,93 @@ class ScopusOptionsRegistration
         }
 
         return $values;
+    }
+
+    // === DEPRECATED ==============================================================================================
+
+    /**
+     * Assigns the options with default values, if they do not already have values.
+     *
+     * @deprecated The default options are handled differently now: The ScopusOptions class itself will return the
+     *      default values in case they dont already exist.
+     *
+     * @return void
+     */
+    public function registerDefaultOptions() {
+        foreach (self::DEFAULT_OPTIONS as $option_name => $default_value) {
+
+            // This method checks if the option exists and if it doesnt if will create an option with that name
+            // and set it to the default value.
+            $this->setOptionDefault($option_name, $default_value);
+        }
+    }
+
+    /**
+     * Will assign the given "value" to the option with the given "option_name", but ONLY if the option does not
+     * already exists.
+     *
+     * @deprecated The default options are handled differently now: The ScopusOptions class itself will return the
+     *      default values in case they dont already exist.
+     *
+     * @param string $option_name The string identifier of the option
+     * @param mixed $value The value to be assigned as the default
+     *
+     * @return void
+     */
+    public function setOptionDefault(string $option_name, $value) {
+        // First we check if the option already exists, if it doesnt it will be set to a default value
+        // The call to "get_option" will evaluate as FALSE, if no option by that name exists or if the option
+        // field is empty!
+        if (!get_option($option_name)) {
+            update_option($option_name, $value);
+        }
+    }
+
+    /**
+     * Returns the WP_User object for the set current scopus user.
+     *
+     * @deprecated This is a concern of the ScopusOptions class
+     *
+     * @return bool|\WP_User
+     */
+    public function getCurrentScopusUser() {
+        $user_id = get_option('scopus_user');
+        $user = get_user_by('id', $user_id);
+        return $user;
+    }
+
+    /**
+     * Returns the array with the string category names, with which an author can be associated
+     *
+     * @deprecated This is a concern of the ScopusOptions class
+     *
+     * @return array
+     */
+    public function getAuthorCategories() {
+        $categories = get_option('author_categories');
+        return $categories;
+    }
+
+    /**
+     * This function gets invoked, when a ajax call to the action "save_scopus_options" gets received.
+     * It will take the values from the request and update the options with them.
+     *
+     * @deprecated This functionality has been rewritten
+     *
+     * @return void
+     */
+    public function ajaxSaveOptions() {
+        $expected_parameters = array('scopus_user');
+        if (PostUtil::containsGETParameters($expected_parameters)) {
+            // Updating the actual options
+            update_option('scopus_user', $_GET['scopus_user']);
+
+            // 24.02.2019
+            // This list of categories dictates, which of the categories can be added to a user, when a new user is
+            // being created.
+            $categories = str_getcsv($_GET['author_categories']);
+            update_option('author_categories', $categories);
+        }
+        wp_die();
     }
 }
