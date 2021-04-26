@@ -182,7 +182,7 @@
                 author: author.emptyScopusAuthor(),
                 backend: new backend.BackendWrapper(),
                 status: {},
-                debug: true
+                debug: false
             }
         },
         methods: {

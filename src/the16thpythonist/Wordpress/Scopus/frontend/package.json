@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build:frontend": "vue-cli-service build --target lib --name wpscopus-frontend --mode development --inline-vue src/main.js",
+    "build:dev": "vue-cli-service build --target lib --name wpscopus-frontend --mode development --inline-vue src/main.js",
+    "build:production": "vue-cli-service build --target lib --name wpscopus-frontend --inline-vue src/main.js",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint"
   },

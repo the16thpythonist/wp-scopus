@@ -61,7 +61,7 @@ function BackendWrapper() {
         });
     }
 
-    this.assembleRestUrl(endpoint) {
+    this.assembleRestUrl = function(endpoint) {
         if (endpoint[0] !== '/') {
             return REST_URL + endpoint;
         } else {
