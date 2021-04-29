@@ -15948,12 +15948,12 @@ function BackendWrapper() {
 
 
   this.getFile = function (fileName) {
-    return this.ajaxRequest('read_data_file', {
+    var parameters = {
+      'action': 'read_data_file',
       'filename': fileName
-    }).then(function (data) {
-      // console.log(`${fileName} content:`);
-      // console.log(data);
-      return data;
+    };
+    return axios_default.a.get(AJAX_URL, parameters).then(function (response) {
+      return response.data;
     });
   }; // -- DEPRECATED ----------------------------------------------------------------------------------------------
 

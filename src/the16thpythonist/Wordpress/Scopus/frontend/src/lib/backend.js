@@ -250,10 +250,12 @@ function BackendWrapper() {
      * @return {Promise<*>}
      */
     this.getFile = function(fileName) {
-        return this.ajaxRequest('read_data_file', {'filename': fileName}).then(function (data){
-            // console.log(`${fileName} content:`);
-            // console.log(data);
-            return data;
+        let parameters = {
+            'action': 'read_data_file',
+            'filename': fileName
+        };
+        return axios.get(AJAX_URL, parameters).then(function (response) {
+            return response.data;
         });
     }
 
