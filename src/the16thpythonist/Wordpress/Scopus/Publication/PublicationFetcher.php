@@ -164,7 +164,7 @@ class PublicationFetcher
         $this->log->info(sprintf('AUTHORS "%s"', implode(', ', $this->author_ids)));
 
         // Creating a new api object. This will do the actual communication with the scopus database
-        $this->api = new Scopus(WpScopus::$API_KEY);
+        $this->api = new ScopusApi(WpScopus::$API_KEY);
         $this->log->info('CREATED A NEW SCOPUS API OBJECT');
 
         // 30.10.2018
