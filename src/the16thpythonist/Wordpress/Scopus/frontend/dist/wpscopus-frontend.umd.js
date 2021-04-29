@@ -15961,7 +15961,9 @@ function BackendWrapper() {
       'action': 'read_data_file',
       'filename': fileName
     };
-    return axios_default.a.get(AJAX_URL, parameters).then(function (response) {
+    return axios_default.a.get(AJAX_URL, {
+      'params': parameters
+    }).then(function (response) {
       return response.data;
     });
   }; // -- DEPRECATED ----------------------------------------------------------------------------------------------
