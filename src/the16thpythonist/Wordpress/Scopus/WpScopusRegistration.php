@@ -145,8 +145,8 @@ class WpScopusRegistration
      */
     public function registerAssets() {
         // The CSS stylesheets
-        add_action('init', [$this, 'registerStylesheets']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueueStylesheets']);
+        add_action('admin_enqueue_scripts', [$this, 'registerStylesheets']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueueStylesheets']);
 
         // The JS scripts
         add_action('init', array($this, 'enqueueScripts'));
@@ -158,8 +158,11 @@ class WpScopusRegistration
 
     public function registerStylesheets() {
         wp_register_style(
-            'wpscopus-frontend-style',
-            plugin_dir_url(__FILE__) . 'frontend/dist/wpscopus-frontend.css'
+            'wpscopus-css',
+            plugin_dir_url(__FILE__) . '/frontend/dist/wpscopus-frontend.css',
+            [],
+            '0.0.0',
+            'all'
         );
     }
 
@@ -175,13 +178,10 @@ class WpScopusRegistration
      * Added the compiled VUE frontend stylesheet
      */
     public function enqueueStylesheets() {
-        wp_enqueue_style(
-            'wp-scopus-style',
-            plugin_dir_url(__FILE__) . 'scopus.css'
-        );
+        // wp_enqueue_style('wp-scopus-style', plugin_dir_url(__FILE__) . 'scopus.css');
 
         wp_enqueue_style(
-            'wpscopus-frontend-style',
+            'wpscopus-css',
             //plugin_dir_url(__FILE__) . "frontend/dist/wpscopus-frontend.css"
         );
     }
@@ -215,7 +215,7 @@ class WpScopusRegistration
             'wpscopus-frontend',
             plugin_dir_url(__FILE__) . 'frontend/dist/wpscopus-frontend.umd.min.js',
             [],
-            '0.0.0.0',
+            '0.0.0',
             true
         );
     }
