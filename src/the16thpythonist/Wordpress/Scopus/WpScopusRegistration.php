@@ -144,13 +144,24 @@ class WpScopusRegistration
      * Added 11.02.2018
      */
     public function registerAssets() {
-        add_action('init', array($this, 'enqueueStylesheets'));
+        // The CSS stylesheets
+        add_action('init', [$this, 'registerStylesheets']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueStylesheets']);
+
+        // The JS scripts
         add_action('init', array($this, 'enqueueScripts'));
     }
 
     // ***************************
     // STYLESHEETS FOR THE PACKAGE
     // ***************************
+
+    public function registerStylesheets() {
+        wp_register_style(
+            'wpscopus-frontend-style',
+            plugin_dir_url(__FILE__) . 'frontend/dist/wpscopus-frontend.css'
+        );
+    }
 
     /**
      * Calls the wordpress "wp_enqueue_style" for all the stylesheets relevant to the scopuswp package.
@@ -170,8 +181,8 @@ class WpScopusRegistration
         );
 
         wp_enqueue_style(
-            'wpscopus-frontend',
-            plugin_dir_url(__FILE__) . "frontend/dist/wpscopus-frontend.css"
+            'wpscopus-frontend-style',
+            //plugin_dir_url(__FILE__) . "frontend/dist/wpscopus-frontend.css"
         );
     }
 
