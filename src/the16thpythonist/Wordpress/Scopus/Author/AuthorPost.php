@@ -256,6 +256,7 @@ class AuthorPost extends PostPost
         while ($results_remaining){
             $class = new \ReflectionClass($api);
             $query_method = $class->getMethod('query');
+            $query_method->setAccessible(true);
             $query = $query_method->invokeArgs($api, [$search_string]);
             $search = $query->start($index)->count($step)->viewStandard()->search();
             //$search = $api->query($search_string)->start($index)->count($step)->viewStandard()->search();
