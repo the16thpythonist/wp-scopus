@@ -126,7 +126,7 @@ class UpdateKITOpenCommand extends Command
         return [
             'author'            => $author_name,
             'year'              => $year,
-            'limit'             => '100'
+            'limit'             => '10'
         ];
     }
 
@@ -199,7 +199,7 @@ class UpdateKITOpenCommand extends Command
                     )
                 );
 
-                $publication_update_count++;
+                $publication_update_count = $publication_update_count + 1;
             }
         }
         $this->log->info("Performed a total of $publication_update_count out of $publications_dois_count updates.");
