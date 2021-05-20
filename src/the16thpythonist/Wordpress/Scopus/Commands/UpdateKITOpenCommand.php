@@ -82,7 +82,7 @@ class UpdateKITOpenCommand extends Command
         $this->args = $args;
         $this->log->info('Querying KITOpen API for observed author publications to update KITOpen IDs.');
 
-        ini_set('memory_limit', '-1');
+        ini_set('memory_limit', '1024M'); // UGLY HACK - should remove at some point...
         $this->api = new KITOpenApi();
         $this->log->info('Created a new KITOpen API object.');
 
@@ -126,7 +126,7 @@ class UpdateKITOpenCommand extends Command
         return [
             'author'            => $author_name,
             'year'              => $year,
-            'limit'             => '10'
+            'limit'             => '100'
         ];
     }
 
