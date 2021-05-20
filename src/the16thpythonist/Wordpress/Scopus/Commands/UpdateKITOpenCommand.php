@@ -82,6 +82,7 @@ class UpdateKITOpenCommand extends Command
         $this->args = $args;
         $this->log->info('Querying KITOpen API for observed author publications to update KITOpen IDs.');
 
+        ini_set('memory_limit', '1024M');
         $this->api = new KITOpenApi();
         $this->log->info('Created a new KITOpen API object.');
 
@@ -196,6 +197,8 @@ class UpdateKITOpenCommand extends Command
                         $kit_id
                     )
                 );
+
+                $publication_update_count++;
             }
         }
         $this->log->info("Performed a total of $publication_update_count out of $publications_dois_count updates.");
