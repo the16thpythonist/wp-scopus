@@ -126,7 +126,7 @@ class UpdateKITOpenCommand extends Command
         return [
             'author'            => $author_name,
             'year'              => $year,
-            'limit'             => '100'
+            'limit'             => '150'
         ];
     }
 
@@ -174,7 +174,7 @@ class UpdateKITOpenCommand extends Command
         $publications_assoc = $this->assoc_dois_publications($publications);
         $publication_dois = array_keys( $publications_assoc );
 
-        $publications_dois_count = count( $publication_dois );
+        $publications_dois_count = count( $publications_assoc );
         $this->log->info( "Out of those, $publication_dois_count had valid DOIs associated with them." );
 
         // Iterating through all the posts and if the DOI of the post is in the list of DOIs that have been fetched
