@@ -839,13 +839,6 @@ $({ target: 'String', proto: true, forced: !correctIsRegExpLogic('includes') }, 
 
 /***/ }),
 
-/***/ "2559":
-/***/ (function(module, exports, __webpack_require__) {
-
-// extracted by mini-css-extract-plugin
-
-/***/ }),
-
 /***/ "25f0":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9289,6 +9282,13 @@ $({ target: 'Array', proto: true, forced: [].forEach != forEach }, {
 
 /***/ }),
 
+/***/ "419d":
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+
+/***/ }),
+
 /***/ "428f":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9566,17 +9566,6 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-
-/***/ }),
-
-/***/ "4c4d":
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_2b8a830e_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("aa52");
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_2b8a830e_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_2b8a830e_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
-/* unused harmony reexport * */
- /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_2b8a830e_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
 
@@ -9872,6 +9861,24 @@ module.exports = function (it) {
   } return it;
 };
 
+
+/***/ }),
+
+/***/ "5ac2":
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+
+/***/ }),
+
+/***/ "5aeb":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_d5b378d4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("419d");
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_d5b378d4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_d5b378d4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
+/* unused harmony reexport * */
+ /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_AuthorMeta_vue_vue_type_style_index_0_id_d5b378d4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
 
@@ -11287,13 +11294,6 @@ module.exports = function (argument) {
 
 /***/ }),
 
-/***/ "aa52":
-/***/ (function(module, exports, __webpack_require__) {
-
-// extracted by mini-css-extract-plugin
-
-/***/ }),
-
 /***/ "ab13":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11371,17 +11371,6 @@ module.exports = function (METHOD_NAME, options) {
   });
 };
 
-
-/***/ }),
-
-/***/ "ae86":
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_1934917f_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("2559");
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_1934917f_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_1934917f_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
-/* unused harmony reexport * */
- /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_1934917f_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
 
@@ -12467,6 +12456,17 @@ module.exports = function (object, names) {
   return result;
 };
 
+
+/***/ }),
+
+/***/ "ca91":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_b0ba4196_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("5ac2");
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_b0ba4196_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_b0ba4196_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
+/* unused harmony reexport * */
+ /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_2_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ScopusOptions_vue_vue_type_style_index_0_id_b0ba4196_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
 
@@ -14072,12 +14072,12 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: ./node_modules/vue/dist/vue.runtime.esm.js
 var vue_runtime_esm = __webpack_require__("2b0e");
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"18522a96-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/author/AuthorMeta.vue?vue&type=template&id=2b8a830e&scoped=true&
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"18522a96-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/author/AuthorMeta.vue?vue&type=template&id=d5b378d4&scoped=true&
 var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"author-meta-input"},[_c('h1',[_vm._v("Statistical Information")]),_c('p',[_vm._v("Nothing here yet")]),_c('h1',[_vm._v("Edit Author Properties")]),_vm._m(0),_c('p',{staticClass:"post-id"},[_vm._v(" Post ID: "+_vm._s(_vm.postId)+" ")]),_c('DescribedTextInput',{ref:"first_name_input",staticClass:"text-input",attrs:{"id":"author-first-name","placeholder":"Maximilian","title":"First Name"},on:{"input":_vm.onInput},model:{value:(_vm.author.firstName),callback:function ($$v) {_vm.$set(_vm.author, "firstName", $$v)},expression:"author.firstName"}}),_c('DescribedTextInput',{staticClass:"text-input",attrs:{"id":"author-last-name","placeholder":"Mustermann","title":"Last Name"},on:{"input":_vm.onInput},model:{value:(_vm.author.lastName),callback:function ($$v) {_vm.$set(_vm.author, "lastName", $$v)},expression:"author.lastName"}}),_c('div',{staticClass:"spacing"}),_vm._m(1),_c('ArrayTextInput',{staticClass:"array-text-input",attrs:{"title":"ScopusID's: "},on:{"input":_vm.onInput},model:{value:(_vm.author.scopusIds),callback:function ($$v) {_vm.$set(_vm.author, "scopusIds", $$v)},expression:"author.scopusIds"}}),_c('div',{staticClass:"spacing"}),_vm._m(2),_c('p',[_vm._v(" The widget below can be used to change to existing category assignments with a drop down selection element. Using the buttons additional categories can be added or existing ones can be removed. ")]),_c('ArraySelectInput',{staticClass:"array-select-input",attrs:{"options":_vm.categories,"title":"Categories: ","default":_vm.categories[0]},on:{"input":_vm.onInput},model:{value:(_vm.author.categories),callback:function ($$v) {_vm.$set(_vm.author, "categories", $$v)},expression:"author.categories"}}),_c('div',{staticClass:"spacing"}),_c('h1',[_vm._v("Author Affiliations")]),_vm._m(3),_c('p',[_vm._v(" The widget below presents a listing, where each of the known affiliations for this author is represented as a row in the table. The radio boxes in right hand columns can be used to mark an affiliation as either whitelisted or blacklisted (to be excluded). ")]),_c('button',{attrs:{"type":"button"},on:{"click":function($event){$event.preventDefault();return _vm.onAffiliationFetch($event)}}},[_vm._v(" Fetch affiliations ")]),_c('ObjectRadioSelect',{staticClass:"object-radio-select",attrs:{"options":_vm.affiliationOptions,"default":_vm.affiliationOptions[0],"title":"Authors Affiliations Test","label":"Affiliations:","name-func":_vm.createAffiliationLabel,"get-func":_vm.getAffiliationValue,"set-func":_vm.setAffiliationValue},on:{"input":_vm.onInput},model:{value:(_vm.author.affiliations),callback:function ($$v) {_vm.$set(_vm.author, "affiliations", $$v)},expression:"author.affiliations"}}),_c('div',{staticClass:"spacing"}),_c('StatusDiv',{staticClass:"status-modified",attrs:{"value":_vm.status}}),_c('button',{staticClass:"save",attrs:{"type":"button"},on:{"click":function($event){$event.preventDefault();return _vm.onSave($event)}}},[_vm._v(" Save All Changes! ")])],1)}
 var staticRenderFns = [function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('em',[_vm._v("Personal Information.")]),_vm._v(" The personal information regarding an author will be saved only for this very website. The information is not needed for the interaction with the scopus database. The entered first and last name will be used to represent the author on this website. Such is the case with the name of this very post: Updating the name here will update the title of this author post. ")])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('em',[_vm._v("Scopus ID's.")]),_vm._v(" Within the scopus database each author is represented by a profile. Amongst different information such as the name and country the profile also consists of the "),_c('strong',[_vm._v("Scopus Author ID")]),_vm._v(". This ID is actually used to represent an author in every request towards the database."),_c('br'),_vm._v(" Once a paper has been published by an author, a reference of it will be linked to the author profile. This is actually how this plugin works: Based on an authors ID all the references to his/her publications are being retrieved from the scopus database and the papers are automatically imported as wordpress posts. "),_c('br'),_vm._v(" Here, an author can be represented by multiple author ID's though. The reason being, that sometimes scopus cannot correctly link a publication to an author (due to a spelling error for example) and then it creates a new profile, linking the publication to this profile instead. The real life author, which is a single person, is now represented by two profiles. For such a case it is possible to associate multiple author ID's with a single author. ")])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('em',[_vm._v("Categories.")]),_vm._v(" Each author can be assigned one or multiple categories from an predefined set of options. This set of choosable categories can be edited on the options page of this plugin."),_c('br'),_vm._v(" The idea is that these categories represent some sort of clustering of papers represented by this website. Assigning a category to an author will have every publication, that is retrieved from the scopus database in the future, also be assigned this very category. ")])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('em',[_vm._v("Author Affiliations.")]),_vm._v(" Within each author's profile inside the scopus database, there is an affiliation associated with him. This affiliation refers to some sort of an institution for which the author currently produces papers and works for."),_c('br'),_vm._v(" In fact with each individual publication which is retrieved from the scopus database there is a list of authors associated with it. And this list of authors contains small \"Snapshots\" of the authors profile at the time of publishing the document. This snapshot includes the affiliation of that time. "),_c('br'),_vm._v(" All this is important because in some cases an author might have worked at a different institution and on a different topic from what is to be displayed in this very website altogether. For such an author these kind of old publications would still end up on the website, even though they may not be desired. For this case it is possible to mark some past affiliations of an author as a \"blacklisted\". This means that when a publication with this author/affiliation combination is automatically retrieved from the scopus database, it is discarded without being imported as a post... ")])}]
 
 
-// CONCATENATED MODULE: ./src/components/author/AuthorMeta.vue?vue&type=template&id=2b8a830e&scoped=true&
+// CONCATENATED MODULE: ./src/components/author/AuthorMeta.vue?vue&type=template&id=d5b378d4&scoped=true&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.concat.js
 var es_array_concat = __webpack_require__("99af");
@@ -16313,8 +16313,9 @@ function BackendWrapperMock() {
         self.log('(-) Saving failed!');
         self.setStatusError(message);
       }); // Reloading the page after saving
+      // window.location.reload();
 
-      window.location.reload();
+      window.location.href = "/wp-admin/post.php?post=".concat(this.postId, "&action=edit");
     },
     onAffiliationFetch: function onAffiliationFetch() {
       var _this = this;
@@ -16434,8 +16435,8 @@ function BackendWrapperMock() {
 });
 // CONCATENATED MODULE: ./src/components/author/AuthorMeta.vue?vue&type=script&lang=js&
  /* harmony default export */ var author_AuthorMetavue_type_script_lang_js_ = (AuthorMetavue_type_script_lang_js_); 
-// EXTERNAL MODULE: ./src/components/author/AuthorMeta.vue?vue&type=style&index=0&id=2b8a830e&scoped=true&lang=css&
-var AuthorMetavue_type_style_index_0_id_2b8a830e_scoped_true_lang_css_ = __webpack_require__("4c4d");
+// EXTERNAL MODULE: ./src/components/author/AuthorMeta.vue?vue&type=style&index=0&id=d5b378d4&scoped=true&lang=css&
+var AuthorMetavue_type_style_index_0_id_d5b378d4_scoped_true_lang_css_ = __webpack_require__("5aeb");
 
 // CONCATENATED MODULE: ./src/components/author/AuthorMeta.vue
 
@@ -16452,18 +16453,18 @@ var AuthorMeta_component = normalizeComponent(
   staticRenderFns,
   false,
   null,
-  "2b8a830e",
+  "d5b378d4",
   null
   
 )
 
 /* harmony default export */ var AuthorMeta = (AuthorMeta_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"18522a96-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/options/ScopusOptions.vue?vue&type=template&id=1934917f&scoped=true&
-var ScopusOptionsvue_type_template_id_1934917f_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"scopus-options"},[_c('h2',[_vm._v("WpScopus Settings")]),_c('div',{staticClass:"description"},[_vm._v(" WpScopus is a plugin, which automatically imports scientific publication records from the Scopus web database as publication posts for a wordpress installation. ")]),_c('h3',[_vm._v("General Settings")]),_c('div',{staticClass:"general-settings"},[_c('div',{staticClass:"user-id row"},[_c('div',{staticClass:"col1"},[_vm._v(" Scopus User ")]),_c('div',{staticClass:"col2"},[_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.userId),expression:"userId"}],on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.userId=$event.target.multiple ? $$selectedVal : $$selectedVal[0]}}},_vm._l((_vm.availableUsers),function(name,id){return _c('option',{key:id,domProps:{"value":id}},[_vm._v(" "+_vm._s((name + " (" + id + ")"))+" ")])}),0),_c('div',{staticClass:"description"},[_vm._v(" The publication records which are imported from scopus are published as new posts. These posts have to refer to some user as an author. This option lets you select which user to be listed as the author of publication posts. (It is recommended to create a new user for this purpose, which is called \"Scopus Bot\" or something similar) ")])])]),_c('div',{staticClass:"author-categories row"},[_c('div',{staticClass:"col1"},[_vm._v(" Author Categories ")]),_c('div',{staticClass:"col2"},[_c('ArrayTextInput',{staticClass:"array-text-input",attrs:{"title":""},model:{value:(_vm.categories),callback:function ($$v) {_vm.categories=$$v},expression:"categories"}}),_c('div',{staticClass:"description"},[_vm._v(" When a new publication is imported as a post, it is automatically assigned a series of categories, which is based on the categories assigned to all of it's observed authors ( observed authors are all those, which are registered within the wordpress site). This widget lets you define the available categories for the authors. ")])],1)])]),_c('h3',[_vm._v("Scopus Settings")]),_c('div',{staticClass:"scopus-settings"},[_c('div',{staticClass:"api-key row"},[_c('div',{staticClass:"col1"},[_vm._v(" Scopus API Key ")]),_c('div',{staticClass:"col2"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.apiKey),expression:"apiKey"}],staticClass:"text-input",attrs:{"type":"text","placeholder":"Enter your Scopus API Key"},domProps:{"value":(_vm.apiKey)},on:{"input":function($event){if($event.target.composing){ return; }_vm.apiKey=$event.target.value}}}),_c('div',{staticClass:"description"},[_vm._v(" The scopus database is not an entirely public service. One has to be a registered user to request data from the publication archive. A request is authenticated by using a personal API key. You will need to create one of those to be able to use this service. ")])])])]),_c('button',{staticClass:"button button-primary",attrs:{"type":"button","id":"submit"},on:{"click":_vm.onSave}},[_vm._v(" Save Changes ")])])}
-var ScopusOptionsvue_type_template_id_1934917f_scoped_true_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"18522a96-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/options/ScopusOptions.vue?vue&type=template&id=b0ba4196&scoped=true&
+var ScopusOptionsvue_type_template_id_b0ba4196_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"scopus-options"},[_c('h2',[_vm._v("WpScopus Settings")]),_c('div',{staticClass:"description"},[_vm._v(" WpScopus is a plugin, which automatically imports scientific publication records from the Scopus web database as publication posts for a wordpress installation. ")]),_c('h3',[_vm._v("General Settings")]),_c('div',{staticClass:"general-settings"},[_c('div',{staticClass:"user-id row"},[_c('div',{staticClass:"col1"},[_vm._v(" Scopus User ")]),_c('div',{staticClass:"col2"},[_c('select',{directives:[{name:"model",rawName:"v-model",value:(_vm.userId),expression:"userId"}],on:{"change":function($event){var $$selectedVal = Array.prototype.filter.call($event.target.options,function(o){return o.selected}).map(function(o){var val = "_value" in o ? o._value : o.value;return val}); _vm.userId=$event.target.multiple ? $$selectedVal : $$selectedVal[0]}}},_vm._l((_vm.availableUsers),function(name,id){return _c('option',{key:id,domProps:{"value":id}},[_vm._v(" "+_vm._s((name + " (" + id + ")"))+" ")])}),0),_c('div',{staticClass:"description"},[_vm._v(" The publication records which are imported from scopus are published as new posts. These posts have to refer to some user as an author. This option lets you select which user to be listed as the author of publication posts. (It is recommended to create a new user for this purpose, which is called \"Scopus Bot\" or something similar) ")])])]),_c('div',{staticClass:"author-categories row"},[_c('div',{staticClass:"col1"},[_vm._v(" Author Categories ")]),_c('div',{staticClass:"col2"},[_c('ArrayTextInput',{staticClass:"array-text-input",attrs:{"title":""},model:{value:(_vm.categories),callback:function ($$v) {_vm.categories=$$v},expression:"categories"}}),_c('div',{staticClass:"description"},[_vm._v(" When a new publication is imported as a post, it is automatically assigned a series of categories, which is based on the categories assigned to all of it's observed authors ( observed authors are all those, which are registered within the wordpress site). This widget lets you define the available categories for the authors. ")])],1)])]),_c('h3',[_vm._v("Scopus Settings")]),_c('div',{staticClass:"scopus-settings"},[_c('div',{staticClass:"api-key row"},[_c('div',{staticClass:"col1"},[_vm._v(" Scopus API Key ")]),_c('div',{staticClass:"col2"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.apiKey),expression:"apiKey"}],staticClass:"text-input",attrs:{"type":"text","placeholder":"Enter your Scopus API Key"},domProps:{"value":(_vm.apiKey)},on:{"input":function($event){if($event.target.composing){ return; }_vm.apiKey=$event.target.value}}}),_c('div',{staticClass:"description"},[_vm._v(" The scopus database is not an entirely public service. One has to be a registered user to request data from the publication archive. A request is authenticated by using a personal API key. You will need to create one of those to be able to use this service. ")])])])]),_c('button',{staticClass:"button button-primary",attrs:{"type":"button","id":"submit"},on:{"click":_vm.onSave}},[_vm._v(" Save Changes ")])])}
+var ScopusOptionsvue_type_template_id_b0ba4196_scoped_true_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/options/ScopusOptions.vue?vue&type=template&id=1934917f&scoped=true&
+// CONCATENATED MODULE: ./src/components/options/ScopusOptions.vue?vue&type=template&id=b0ba4196&scoped=true&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"18522a96-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/inputs/RowTextInput.vue?vue&type=template&id=eded4212&scoped=true&
 var RowTextInputvue_type_template_id_eded4212_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"row-text-input"},[_c('label',{staticClass:"title",attrs:{"for":_vm.id}},[_vm._v(" "+_vm._s(_vm.title)+" ")]),_c('input',{ref:"inputField",staticClass:"input",attrs:{"type":"text","id":_vm.id,"name":_vm.id,"placeholder":_vm.placeholder},domProps:{"value":_vm.value},on:{"input":_vm.onInput}})])}
@@ -16705,8 +16706,8 @@ var RowTextInput_component = normalizeComponent(
 });
 // CONCATENATED MODULE: ./src/components/options/ScopusOptions.vue?vue&type=script&lang=js&
  /* harmony default export */ var options_ScopusOptionsvue_type_script_lang_js_ = (ScopusOptionsvue_type_script_lang_js_); 
-// EXTERNAL MODULE: ./src/components/options/ScopusOptions.vue?vue&type=style&index=0&id=1934917f&scoped=true&lang=css&
-var ScopusOptionsvue_type_style_index_0_id_1934917f_scoped_true_lang_css_ = __webpack_require__("ae86");
+// EXTERNAL MODULE: ./src/components/options/ScopusOptions.vue?vue&type=style&index=0&id=b0ba4196&scoped=true&lang=css&
+var ScopusOptionsvue_type_style_index_0_id_b0ba4196_scoped_true_lang_css_ = __webpack_require__("ca91");
 
 // CONCATENATED MODULE: ./src/components/options/ScopusOptions.vue
 
@@ -16719,11 +16720,11 @@ var ScopusOptionsvue_type_style_index_0_id_1934917f_scoped_true_lang_css_ = __we
 
 var ScopusOptions_component = normalizeComponent(
   options_ScopusOptionsvue_type_script_lang_js_,
-  ScopusOptionsvue_type_template_id_1934917f_scoped_true_render,
-  ScopusOptionsvue_type_template_id_1934917f_scoped_true_staticRenderFns,
+  ScopusOptionsvue_type_template_id_b0ba4196_scoped_true_render,
+  ScopusOptionsvue_type_template_id_b0ba4196_scoped_true_staticRenderFns,
   false,
   null,
-  "1934917f",
+  "b0ba4196",
   null
   
 )

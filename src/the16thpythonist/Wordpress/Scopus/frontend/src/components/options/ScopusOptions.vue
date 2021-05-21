@@ -159,13 +159,14 @@
         font-size: 14px;
     }
 
-    .col1 {
+    div.col1 {
         font-weight: bold;
         width: 300px;
     }
 
-    .col2 {
-        width: 100%;
+    div.col2 {
+        /* This is not optimal, but somehow it wont work otherwise */
+        width: 70%;
         align-self: flex-start;
         margin-right: 20px;
     }

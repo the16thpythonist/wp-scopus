@@ -273,11 +273,15 @@
                     self.setStatusSaved();
                 }).catch(function (message) {
                     self.log('(-) Saving failed!');
-                    self.setStatusError(message)
+                    self.setStatusError(message);
                 });
 
-                // Reloading the page after saving
-                window.location.reload();
+                // Instead of reloading the page here, we actually explicitly redirect to the edit page of this post.
+                // this is due to the fact, that adding a new post is a seperate url. If you were to add a new post
+                // and then only reload the page that would give you the blank new post form again. But that is not the
+                // behavoir we want. Instead we want a reload and then continue editing this author.
+                // window.location.reload();
+                window.location.href = `/wp-admin/post.php?post=${this.postId}&action=edit`;
             },
             onAffiliationFetch: function () {
                 this.log('-- starting affiliation gather --');
